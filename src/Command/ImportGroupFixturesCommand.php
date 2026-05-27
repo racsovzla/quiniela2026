@@ -50,7 +50,7 @@ class ImportGroupFixturesCommand extends Command
         }
 
         $rowNum = 0;
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
             $rowNum++;
             if ($rowNum === 1 && isset($row[0]) && mb_strtolower(trim((string) $row[0])) === 'group_code') {
                 continue;

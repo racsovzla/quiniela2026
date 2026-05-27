@@ -27,6 +27,11 @@ when@test:
 
 when@prod:
     doctrine:
+        dbal:
+            driver: pdo_pgsql
+            # Managed PostgreSQL may return an empty platform version to DBAL during CLI bootstrap.
+            # Pinning server version avoids InvalidPlatformVersion("") in migrations.
+            server_version: '17.0.0'
         orm:
             query_cache_driver:
                 type: pool
