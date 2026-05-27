@@ -32,6 +32,12 @@ class RequireHttpsSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // If the proxy header is missing, do not force a redirect. This avoids
+        // loops on platforms where the app only sees internal HTTP traffic.
+        if ($forwardedProto === '') {
+            return;
+        }
+
         $event->setResponse(new RedirectResponse(
             'https://'.$request->getHttpHost().$request->getRequestUri(),
             RedirectResponse::HTTP_TEMPORARY_REDIRECT,

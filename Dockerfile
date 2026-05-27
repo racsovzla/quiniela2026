@@ -24,6 +24,9 @@ COPY . ${APP_DIR}
 
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
+RUN mkdir -p var/cache var/log var/share \
+    && chown -R www-data:www-data var
+
 EXPOSE 80
 
 CMD ["apache2-foreground"]
