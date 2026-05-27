@@ -14,7 +14,7 @@ services:
       - key: APP_SECRET
         generateValue: true
       - key: DEFAULT_URI
-        value: https://quiniela2026.onrender.com
+        value: https://quiniela2026-1d6f.onrender.com
       - key: DATABASE_URL
         sync: false
       - key: MAILER_DSN

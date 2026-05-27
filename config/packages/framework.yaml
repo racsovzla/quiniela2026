@@ -28,3 +28,9 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+
+when@prod:
+    framework:
+        # Trust Render reverse-proxy headers so request scheme/host are resolved correctly.
+        trusted_proxies: '127.0.0.1,::1,REMOTE_ADDR'
+        trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-prefix']
