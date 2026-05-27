@@ -24,6 +24,8 @@ COPY . ${APP_DIR}
 
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
+RUN php bin/console asset-map:compile --env=prod
+
 RUN mkdir -p var/cache var/log var/share \
     && chown -R www-data:www-data var
 
