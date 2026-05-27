@@ -3,6 +3,8 @@ FROM php:8.4-apache
 ARG APP_DIR=/var/www/html
 ENV APACHE_DOCUMENT_ROOT=${APP_DIR}/public
 ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git unzip libicu-dev libzip-dev libpq-dev \
