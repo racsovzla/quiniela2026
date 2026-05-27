@@ -123,6 +123,23 @@ h6,
     --bs-btn-hover-color: #fff;
 }
 
+.btn-google {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+}
+
+.btn-google .google-logo {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+}
+
+.btn-google span {
+    line-height: 1;
+}
+
 .btn-link {
     --bs-btn-color: #7fd3ff;
     --bs-btn-hover-color: #b4e8ff;
@@ -308,6 +325,103 @@ body.has-open-modal {
     overflow: auto;
 }
 
+.auth-shell {
+    position: relative;
+    max-width: 620px;
+    margin: 1.5rem auto 0;
+}
+
+.auth-card {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.auth-title {
+    letter-spacing: 0.03em;
+}
+
+.auth-subtitle {
+    color: #c6dbea;
+    font-size: 0.96rem;
+    line-height: 1.45;
+}
+
+.auth-form {
+    display: grid;
+    gap: 0.95rem;
+}
+
+.auth-field {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.auth-field .form-label {
+    margin: 0;
+}
+
+.auth-field .form-control {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 11px;
+    padding-inline: 0.85rem 2.9rem;
+}
+
+.auth-field .invalid-feedback,
+.auth-field .form-error-message {
+    display: block;
+    color: #ffd4d4;
+    font-size: 0.84rem;
+    margin-top: 0.1rem;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1rem 0;
+    color: #9cb3c5;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: rgba(156, 179, 197, 0.28);
+}
+
+.auth-footnote {
+    color: #b4cbdb;
+    font-size: 0.9rem;
+}
+
+.auth-footnote a {
+    color: #8ddcff;
+    font-weight: 700;
+}
+
+.auth-glow {
+    position: absolute;
+    inset: -14px;
+    border-radius: 22px;
+    z-index: -1;
+    background:
+        radial-gradient(circle at 15% 8%, rgba(46, 196, 255, 0.2), transparent 42%),
+        radial-gradient(circle at 85% 94%, rgba(0, 191, 121, 0.2), transparent 46%);
+    filter: blur(14px);
+    opacity: 0.7;
+}
+
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+    display: none;
+}
+
 @media (max-width: 991.98px) {
     .navbar-brand {
         font-size: 1.45rem;
@@ -376,5 +490,22 @@ body.has-open-modal {
 
     .prediction-modal__body {
         max-height: calc(100vh - 7.5rem);
+    }
+
+    .auth-shell {
+        margin-top: 0.65rem;
+    }
+
+    .auth-card .card-body {
+        padding: 1.05rem;
+    }
+
+    .auth-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .auth-field .form-control {
+        min-height: 44px;
+        padding-inline: 0.75rem 2.6rem;
     }
 }
