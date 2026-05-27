@@ -1,0 +1,28 @@
+<h2>Predicciones publicadas</h2>
+<p>Hola {{ recipient.name }},</p>
+<p>Ya se cerró la edición para este partido:</p>
+<p><strong>{{ homeTeamName }} vs {{ awayTeamName }}</strong></p>
+<p>Inicio: {{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</p>
+
+{% if summaryRows is not empty %}
+    <table cellpadding="8" cellspacing="0" border="1" style="border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr>
+                <th align="left">Participante</th>
+                <th align="left">Predicción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in summaryRows %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td><strong>{{ row.homeScore }} - {{ row.awayScore }}</strong></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No hubo predicciones cargadas para este partido.</p>
+{% endif %}
+
+<p>Quiniela 2026</p>

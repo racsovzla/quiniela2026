@@ -1,3 +1,380 @@
-body {
-    background-color: skyblue;
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --wc-bg: #07121a;
+    --wc-bg-elevated: #0e1d2a;
+    --wc-bg-soft: #13283a;
+    --wc-line: #224057;
+    --wc-text: #e8f1f7;
+    --wc-muted: #9cb3c5;
+    --wc-primary: #00a86b;
+    --wc-primary-hover: #00bf79;
+    --wc-accent: #2ec4ff;
+    --wc-warning: #f5b700;
+    --wc-danger: #ef4444;
+}
+
+body,
+body.bg-light {
+    font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--wc-text);
+    background:
+        radial-gradient(circle at 18% -8%, rgba(46, 196, 255, 0.14), transparent 36%),
+        radial-gradient(circle at 84% 0%, rgba(0, 168, 107, 0.18), transparent 30%),
+        linear-gradient(180deg, #091722 0%, var(--wc-bg) 52%, #060f16 100%);
+    min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.navbar-brand {
+    font-family: 'Bebas Neue', 'Impact', sans-serif;
+    letter-spacing: 0.04em;
+}
+
+.navbar.bg-dark {
+    background: linear-gradient(90deg, #08131d 0%, #0d2030 55%, #113347 100%) !important;
+    border-bottom: 1px solid rgba(46, 196, 255, 0.3);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(232, 241, 247, 0.86);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+    color: #fff;
+}
+
+.card,
+.bg-white,
+.table-responsive.bg-white {
+    background: linear-gradient(180deg, rgba(20, 40, 56, 0.95), rgba(14, 29, 42, 0.97)) !important;
+    border: 1px solid var(--wc-line) !important;
+    color: var(--wc-text);
+}
+
+.card-header {
+    background: rgba(46, 196, 255, 0.08);
+    border-bottom: 1px solid var(--wc-line);
+    color: #f6fbff;
+}
+
+.table {
+    --bs-table-color: var(--wc-text);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: rgba(156, 179, 197, 0.25);
+    --bs-table-striped-bg: rgba(46, 196, 255, 0.06);
+    --bs-table-hover-bg: rgba(46, 196, 255, 0.1);
+}
+
+.table thead th {
+    color: #d8ebf7;
+    border-bottom-color: rgba(156, 179, 197, 0.35);
+    font-weight: 700;
+}
+
+.list-group-item {
+    background: transparent;
+    color: var(--wc-text);
+    border-color: rgba(156, 179, 197, 0.22);
+}
+
+.form-control,
+.form-select {
+    color: var(--wc-text);
+    background-color: rgba(8, 21, 31, 0.85);
+    border-color: rgba(156, 179, 197, 0.38);
+}
+
+.form-control::placeholder {
+    color: rgba(156, 179, 197, 0.75);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--wc-accent);
+    box-shadow: 0 0 0 0.25rem rgba(46, 196, 255, 0.2);
+    background-color: rgba(8, 21, 31, 0.95);
+    color: #fff;
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--wc-primary);
+    --bs-btn-border-color: var(--wc-primary);
+    --bs-btn-hover-bg: var(--wc-primary-hover);
+    --bs-btn-hover-border-color: var(--wc-primary-hover);
+    --bs-btn-active-bg: var(--wc-primary-hover);
+    --bs-btn-active-border-color: var(--wc-primary-hover);
+    --bs-btn-color: #02110b;
+    --bs-btn-font-weight: 700;
+}
+
+.btn-outline-dark {
+    --bs-btn-color: #d7ebf8;
+    --bs-btn-border-color: #3f647e;
+    --bs-btn-hover-bg: #1d374c;
+    --bs-btn-hover-border-color: #5b86a4;
+    --bs-btn-hover-color: #fff;
+}
+
+.btn-link {
+    --bs-btn-color: #7fd3ff;
+    --bs-btn-hover-color: #b4e8ff;
+}
+
+.badge.text-bg-info {
+    background-color: rgba(46, 196, 255, 0.24) !important;
+    color: #d8f4ff !important;
+}
+
+.badge.text-bg-secondary {
+    background-color: rgba(156, 179, 197, 0.24) !important;
+    color: #e8f1f7 !important;
+}
+
+.badge.text-bg-light {
+    background-color: rgba(46, 196, 255, 0.12) !important;
+    color: #e8f1f7 !important;
+}
+
+.alert {
+    border: 1px solid transparent;
+}
+
+.alert-info {
+    color: #d8f4ff;
+    background-color: rgba(46, 196, 255, 0.12);
+    border-color: rgba(46, 196, 255, 0.26);
+}
+
+.alert-warning {
+    color: #fff0c2;
+    background-color: rgba(245, 183, 0, 0.14);
+    border-color: rgba(245, 183, 0, 0.3);
+}
+
+.alert-success {
+    color: #d4ffe9;
+    background-color: rgba(0, 168, 107, 0.14);
+    border-color: rgba(0, 168, 107, 0.32);
+}
+
+.alert-danger {
+    color: #ffd4d4;
+    background-color: rgba(239, 68, 68, 0.14);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.text-body-secondary,
+small,
+.form-text {
+    color: var(--wc-muted) !important;
+}
+
+a {
+    color: #7fd3ff;
+}
+
+a:hover {
+    color: #b4e8ff;
+}
+
+main.container {
+    max-width: 1180px;
+}
+
+.display-6 {
+    letter-spacing: 0.02em;
+}
+
+.lead {
+    color: #cde1ef;
+}
+
+.card {
+    border-radius: 14px;
+}
+
+.card .card-body {
+    padding: 1.1rem;
+}
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+
+.table td {
+    line-height: 1.35;
+}
+
+.group-fixtures-table {
+    table-layout: fixed;
+}
+
+.group-fixtures-table td {
+    height: 86px;
+    padding: 0.55rem 0.5rem;
+    vertical-align: middle;
+}
+
+.group-fixtures-table .team-cell {
+    width: 33%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.2;
+}
+
+.group-fixtures-table .score-cell {
+    width: 34%;
+    min-width: 130px;
+}
+
+.group-fixtures-table .kickoff-time {
+    white-space: nowrap;
+    font-size: 0.82rem;
+}
+
+.list-group-item {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.form-label {
+    font-weight: 600;
+}
+
+.navbar .container {
+    row-gap: 0.35rem;
+}
+
+.navbar .navbar-nav {
+    gap: 0.2rem;
+}
+
+body.has-open-modal {
+    overflow: hidden;
+}
+
+.prediction-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: none;
+}
+
+.prediction-modal.is-open {
+    display: block;
+}
+
+.prediction-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 10, 16, 0.72);
+    backdrop-filter: blur(2px);
+}
+
+.prediction-modal__panel {
+    position: relative;
+    width: min(980px, calc(100% - 1.5rem));
+    max-height: calc(100vh - 2rem);
+    margin: 1rem auto;
+    border-radius: 14px;
+    border: 1px solid var(--wc-line);
+    background: linear-gradient(180deg, rgba(18, 37, 52, 0.98), rgba(10, 24, 35, 0.98));
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.prediction-modal__header {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid rgba(156, 179, 197, 0.25);
+}
+
+.prediction-modal__body {
+    max-height: calc(100vh - 9rem);
+    overflow: auto;
+}
+
+@media (max-width: 991.98px) {
+    .navbar-brand {
+        font-size: 1.45rem;
+    }
+
+    .table {
+        font-size: 0.93rem;
+    }
+
+    .list-group-item {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .list-group-item .btn {
+        min-height: 36px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    main.container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .display-6 {
+        font-size: 1.9rem;
+    }
+
+    .card .card-body {
+        padding: 0.9rem;
+    }
+
+    .table {
+        font-size: 0.88rem;
+    }
+
+    .group-fixtures-table td {
+        height: 78px;
+        padding: 0.45rem 0.4rem;
+    }
+
+    .group-fixtures-table .team-cell {
+        font-size: 0.95em;
+    }
+
+    .group-fixtures-table .kickoff-time {
+        font-size: 0.75rem;
+    }
+
+    .btn,
+    .form-control,
+    .form-select {
+        min-height: 40px;
+    }
+
+    .prediction-modal__panel {
+        width: calc(100% - 0.75rem);
+        margin: 0.5rem auto;
+        max-height: calc(100vh - 1rem);
+    }
+
+    .prediction-modal__header {
+        padding: 0.65rem 0.75rem;
+    }
+
+    .prediction-modal__body {
+        max-height: calc(100vh - 7.5rem);
+    }
 }

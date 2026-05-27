@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Registro{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">Registro</h2>
+                {{ form_start(registrationForm) }}
+                    {{ form_row(registrationForm.name, {label: 'Nombre'}) }}
+                    {{ form_row(registrationForm.email, {label: 'Correo'}) }}
+                    {{ form_row(registrationForm.plainPassword, {label: 'Contraseña'}) }}
+                    {{ form_row(registrationForm.captcha) }}
+                    <button class="btn btn-primary w-100">Crear cuenta</button>
+                {{ form_end(registrationForm) }}
+
+                <hr>
+                <a class="btn btn-outline-dark w-100" href="{{ path('connect_google_start') }}">Continuar con Google</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

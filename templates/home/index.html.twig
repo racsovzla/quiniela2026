@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inicio | Quiniela 2026{% endblock %}
+
+{% block body %}
+<div class="p-4 p-md-5 mb-4 bg-white border rounded-3 shadow-sm">
+    <h1 class="display-6">Quiniela Mundial FIFA 2026</h1>
+    <p class="lead mb-4">Regístrate, verifica tu correo y participa con tus predicciones de fase de grupos.</p>
+
+    {% if app.user %}
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-primary" href="{{ path('app_predictions') }}">Ir a predicciones</a>
+            <a class="btn btn-outline-dark" href="{{ path('app_leaderboard') }}">Ver leaderboard</a>
+        </div>
+    {% else %}
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-primary" href="{{ path('app_register') }}">Crear cuenta</a>
+            <a class="btn btn-outline-dark" href="{{ path('app_login') }}">Iniciar sesión</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

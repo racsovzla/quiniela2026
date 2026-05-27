@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: quiniela2026
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_DEBUG
+        value: "0"
+      - key: APP_SECRET
+        generateValue: true
+      - key: DEFAULT_URI
+        value: https://quiniela2026.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: MAILER_DSN
+        sync: false
+      - key: MAILER_FROM_EMAIL
+        sync: false
+      - key: MAILER_FROM_NAME
+        value: Quiniela 2026
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: RECAPTCHA3_KEY
+        sync: false
+      - key: RECAPTCHA3_SECRET
+        sync: false
+      - key: MESSENGER_TRANSPORT_DSN
+        value: sync://

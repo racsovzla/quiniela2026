@@ -1,0 +1,103 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Predicciones{% endblock %}
+
+{% block body %}
+<h1 class="h3 mb-3">Predicciones - Fase de Grupos</h1>
+
+{% if not canParticipate %}
+    <div class="alert alert-warning">Tu cuenta debe estar verificada y aprobada para guardar predicciones.</div>
+{% elseif paymentValidatedAt is null %}
+    <div class="alert alert-info">Ya puedes cargar predicciones, pero sumarás puntos solo desde que el admin valide tu pago.</div>
+{% else %}
+    <div class="alert alert-success">Pago validado. Sumas puntos para partidos con kickoff desde {{ paymentValidatedAt|date('Y-m-d H:i') }} UTC.</div>
+{% endif %}
+
+<div class="table-responsive bg-white border rounded-3 shadow-sm">
+<table class="table align-middle mb-0">
+    <thead>
+        <tr>
+            <th>Grupo</th>
+            <th>Partido</th>
+            <th>Inicio (UTC)</th>
+            <th>Tu predicción</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for fixture in fixtures %}
+        {% set p = predictionByFixture[fixture.id] ?? null %}
+        {% set canEditFixture = fixtureCanEdit[fixture.id]|default(false) %}
+        {% set formDisabled = (not canParticipate) or (not canEditFixture) %}
+        <tr>
+            <td>{{ fixture.group ? fixture.group.code : (fixture.homeTeam.group ? fixture.homeTeam.group.code : '-') }}</td>
+            <td>{{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_emoji }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</td>
+            <td><span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
+            <td>
+                <form class="d-flex gap-2" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('save_prediction_' ~ fixture.id) }}">
+                    <input type="number" min="0" name="home" class="form-control" style="max-width:90px" value="{{ p ? p.predictedHomeScore : '' }}" {{ formDisabled ? 'disabled' : '' }}>
+                    <span class="pt-2">-</span>
+                    <input type="number" min="0" name="away" class="form-control" style="max-width:90px" value="{{ p ? p.predictedAwayScore : '' }}" {{ formDisabled ? 'disabled' : '' }}>
+                    <button class="btn btn-primary btn-sm" {{ formDisabled ? 'disabled' : '' }}>Guardar</button>
+                </form>
+            </td>
+            <td>
+                {% if fixture.status == 'finished' %}
+                    <span class="badge text-bg-secondary">Finalizado</span>
+                {% elseif canEditFixture %}
+                    <span class="badge text-bg-success">Abierta</span>
+                    <small class="d-block text-body-secondary mt-1 js-deadline-countdown" data-deadline="{{ fixtureDeadlineIso[fixture.id]|default('') }}"></small>
+                {% else %}
+                    <span class="badge text-bg-warning">Cerrada</span>
+                {% endif %}
+            </td>
+        </tr>
+    {% else %}
+        <tr><td colspan="5" class="text-center py-4">No hay partidos cargados aún.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        (() => {
+            const updateCountdowns = () => {
+                document.querySelectorAll('.js-deadline-countdown').forEach((element) => {
+                    const rawDeadline = element.dataset.deadline;
+                    const deadline = new Date(rawDeadline);
+
+                    if (!rawDeadline || Number.isNaN(deadline.getTime())) {
+                        element.textContent = '';
+                        return;
+                    }
+
+                    const now = new Date();
+                    const diffMs = deadline.getTime() - now.getTime();
+                    if (diffMs <= 0) {
+                        element.textContent = 'Ventana cerrada';
+                        return;
+                    }
+
+                    const minutes = Math.floor(diffMs / 60000);
+                    const hours = Math.floor(minutes / 60);
+                    const remMinutes = minutes % 60;
+
+                    if (hours > 0) {
+                        element.textContent = `Cierra en ${hours}h ${remMinutes}m`;
+                        return;
+                    }
+
+                    element.textContent = `Cierra en ${minutes}m`;
+                });
+            };
+
+            updateCountdowns();
+            setInterval(updateCountdowns, 30000);
+            document.addEventListener('turbo:load', updateCountdowns);
+        })();
+    </script>
+{% endblock %}

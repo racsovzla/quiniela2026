@@ -1,0 +1,233 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin{% endblock %}
+
+{% block body %}
+<h1 class="h3 mb-3">Panel Admin</h1>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Simulación</h2>
+        <div class="d-flex flex-wrap gap-2">
+            <form method="post" action="{{ path('admin_simulation_seed') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('admin_simulation_seed') }}">
+                <button class="btn btn-primary btn-sm">Cargar 10 usuarios + predicciones</button>
+            </form>
+            <form method="post" action="{{ path('admin_simulation_simulate_next') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('admin_simulation_simulate_next') }}">
+                <button class="btn btn-outline-dark btn-sm">Simular siguiente partido</button>
+            </form>
+            <form method="post" action="{{ path('admin_simulation_finalize_in_progress') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('admin_simulation_finalize_in_progress') }}">
+                <button class="btn btn-success btn-sm">Finalizar partido en curso</button>
+            </form>
+            <button type="button" class="btn btn-warning btn-sm" data-open-predictions="fixture-email-modal">Enviar predicciones por correo</button>
+        </div>
+    </div>
+</div>
+
+<div class="prediction-modal" id="fixture-email-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="fixture-email-modal-title">
+    <div class="prediction-modal__backdrop" data-close-predictions="fixture-email-modal"></div>
+    <div class="prediction-modal__panel" role="document">
+        <div class="prediction-modal__header d-flex justify-content-between align-items-center gap-2">
+            <h2 class="h5 mb-0" id="fixture-email-modal-title">Enviar predicciones por correo</h2>
+            <button type="button" class="btn btn-outline-dark btn-sm" data-close-predictions="fixture-email-modal">Cerrar</button>
+        </div>
+        <div class="prediction-modal__body p-3">
+            <form method="post" action="{{ path('admin_fixture_send_predictions_email') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('send_fixture_predictions_email') }}">
+                <div class="mb-3">
+                    <label class="form-label" for="fixture-email-select">Partido</label>
+                    <select id="fixture-email-select" name="fixture_id" class="form-select" required>
+                        <option value="">Selecciona un partido</option>
+                        {% for fixture in fixtures %}
+                            <option value="{{ fixture.id }}">
+                                {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} - {{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <p class="text-body-secondary mb-3">Se enviará un resumen a todos los usuarios aprobados y verificados usando tu SMTP configurado.</p>
+                <button class="btn btn-primary">Enviar resumen</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Usuarios pendientes</h2>
+                <ul class="list-group">
+                    {% for user in pendingUsers %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <div>{{ user.name }}</div>
+                                <small>{{ user.email }}</small>
+                            </div>
+                            <form method="post" action="{{ path('admin_user_approve', {id: user.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('approve_user_' ~ user.id) }}">
+                                <button class="btn btn-success btn-sm">Aprobar</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item">No hay usuarios pendientes.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h2 class="h5">Usuarios aprobados y pago</h2>
+                <ul class="list-group">
+                    {% for user in approvedUsers %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                            <div>
+                                <div>{{ user.name }}</div>
+                                <small>{{ user.email }}</small>
+                                <div class="mt-1">
+                                    {% if user.paymentValidatedAt %}
+                                        <span class="badge text-bg-success">Pago validado</span>
+                                        <small class="text-body-secondary d-block">Desde: {{ user.paymentValidatedAt|date('Y-m-d H:i') }} UTC</small>
+                                    {% else %}
+                                        <span class="badge text-bg-warning">Pago pendiente</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if not user.paymentValidatedAt %}
+                                <form method="post" action="{{ path('admin_user_validate_payment', {id: user.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('validate_payment_' ~ user.id) }}">
+                                    <button class="btn btn-primary btn-sm">Validar pago</button>
+                                </form>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="list-group-item">No hay usuarios aprobados.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 mb-0">Grupos</h2>
+                    <a class="btn btn-primary btn-sm" href="{{ path('admin_group_new') }}">Nuevo grupo</a>
+                </div>
+                <ul class="list-group">
+                    {% for group in groups %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ group.code }} - {{ group.name }}</span>
+                            <a class="btn btn-outline-dark btn-sm" href="{{ path('admin_group_edit', {id: group.id}) }}">Editar</a>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item">No hay grupos.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 mb-0">Equipos</h2>
+                    <a class="btn btn-primary btn-sm" href="{{ path('admin_team_new') }}">Nuevo equipo</a>
+                </div>
+                <ul class="list-group">
+                    {% for team in teams %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ team.code|flag_emoji }} {{ team.code|country_name_es(team.name) }} ({{ team.code }}){% if team.group %} - Grupo {{ team.group.code }}{% endif %}</span>
+                            <a class="btn btn-outline-dark btn-sm" href="{{ path('admin_team_edit', {id: team.id}) }}">Editar</a>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item">No hay equipos.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 mb-0">Partidos</h2>
+                    <a class="btn btn-primary btn-sm" href="{{ path('admin_fixture_new') }}">Nuevo partido</a>
+                </div>
+                <ul class="list-group">
+                    {% for fixture in fixtures %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_emoji }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} - <span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></span>
+                            <a class="btn btn-outline-dark btn-sm" href="{{ path('admin_fixture_edit', {id: fixture.id}) }}">Editar</a>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item">No hay partidos.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        (() => {
+            if (window.__adminModalBound) {
+                return;
+            }
+            window.__adminModalBound = true;
+
+            const openModal = (id) => {
+                const modal = document.getElementById(id);
+                if (!modal) {
+                    return;
+                }
+
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('has-open-modal');
+            };
+
+            const closeModal = (id) => {
+                const modal = document.getElementById(id);
+                if (!modal) {
+                    return;
+                }
+
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+
+                if (!document.querySelector('.prediction-modal.is-open')) {
+                    document.body.classList.remove('has-open-modal');
+                }
+            };
+
+            document.addEventListener('click', (event) => {
+                const openTrigger = event.target.closest('[data-open-predictions]');
+                if (openTrigger) {
+                    openModal(openTrigger.dataset.openPredictions);
+                    return;
+                }
+
+                const closeTrigger = event.target.closest('[data-close-predictions]');
+                if (closeTrigger) {
+                    closeModal(closeTrigger.dataset.closePredictions);
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') {
+                    return;
+                }
+
+                document.querySelectorAll('.prediction-modal.is-open').forEach((modal) => {
+                    closeModal(modal.id);
+                });
+            });
+        })();
+    </script>
+{% endblock %}

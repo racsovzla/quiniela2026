@@ -1,12 +1,27 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     secret: '%env(APP_SECRET)%'
+    default_locale: en
+    set_locale_from_accept_language: false
+    enabled_locales: ['en', 'es']
+    php_errors:
+        log: true
 
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
     #esi: true
     #fragments: true
+
+    rate_limiter:
+        verify_code:
+            policy: 'sliding_window'
+            limit: 8
+            interval: '10 minutes'
+        verify_resend:
+            policy: 'sliding_window'
+            limit: 3
+            interval: '30 minutes'
 
 when@test:
     framework:

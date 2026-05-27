@@ -1,0 +1,261 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Leaderboard{% endblock %}
+
+{% block body %}
+<h1 class="h3 mb-3">Leaderboard</h1>
+
+{% if nextFixture %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <div class="fw-semibold">Pick del día</div>
+                <div>
+                    {{ nextFixture.homeTeam.code|flag_emoji }} {{ nextFixture.homeTeam.code|country_name_es(nextFixture.homeTeam.name) }}
+                    vs
+                    {{ nextFixture.awayTeam.code|flag_emoji }} {{ nextFixture.awayTeam.code|country_name_es(nextFixture.awayTeam.name) }}
+                </div>
+            </div>
+            <small class="text-body-secondary">
+                Cierre: <span class="js-local-datetime" data-utc="{{ nextFixture.kickoffAt|date_modify('-5 minutes')|date('c') }}">{{ nextFixture.kickoffAt|date_modify('-5 minutes')|date('Y-m-d H:i') }} UTC</span>
+            </small>
+        </div>
+    </div>
+{% endif %}
+
+<div class="row g-4 align-items-start">
+    <div class="col-lg-4">
+        <h2 class="h5 mb-2">Usuarios</h2>
+        <div class="table-responsive bg-white border rounded-3 shadow-sm">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Participante</th>
+                        <th>Puntos</th>
+                        <th>Aciertos exactos</th>
+                        <th>Insignias</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        {% set livePoints = livePointsByUser[row.userId]|default(0) %}
+                        {% set streak = streakByUser[row.userId]|default(0) %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ row.name }}</td>
+                            <td>
+                                <strong>{{ row.points }}</strong>
+                                {% if livePoints > 0 %}
+                                    <span class="text-info fw-semibold">+{{ livePoints }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ row.exactHits }}</td>
+                            <td>
+                                {% if loop.index == 1 %}
+                                    <span class="badge text-bg-warning">Líder</span>
+                                {% endif %}
+                                {% if streak >= 3 %}
+                                    <span class="badge text-bg-info">Racha {{ streak }}</span>
+                                {% endif %}
+                                {% if row.exactHits >= 5 %}
+                                    <span class="badge text-bg-success">Francotirador</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" class="text-center py-4">Sin datos todavía.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="h5 mt-3 mb-2">Ranking semanal (7 días)</h2>
+        <div class="table-responsive bg-white border rounded-3 shadow-sm">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Participante</th>
+                        <th>Puntos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in weeklyRows %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ row.name }}</td>
+                            <td><strong>{{ row.points }}</strong></td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="3" class="text-center py-4">Aún sin partidos finalizados esta semana.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <h2 class="h5 mb-2">Partidos por grupo</h2>
+        <div class="row g-3">
+            {% for groupCode, fixtures in fixturesByGroup %}
+                {% set modalId = 'group-predictions-' ~ loop.index %}
+                <div class="col-12 col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header fw-semibold d-flex justify-content-between align-items-center gap-2">
+                            <span>Grupo {{ groupCode }}</span>
+                            <button
+                                type="button"
+                                class="btn btn-outline-dark btn-sm"
+                                data-open-predictions="{{ modalId }}"
+                            >Ver predicciones</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0 group-fixtures-table">
+                                    <tbody>
+                                        {% for fixture in fixtures %}
+                                            {% set kickoffTs = fixture.kickoffAt|date('U') %}
+                                            {% set nowTs = 'now'|date('U') %}
+                                            {% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null %}
+                                            {% set isInProgress = fixture.status == 'scheduled' and (kickoffTs <= nowTs or hasLoadedScore) %}
+                                            {% set isFinished = fixture.status == 'finished' %}
+                                            <tr>
+                                                <td class="fw-semibold team-cell team-cell-home">
+                                                    {{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
+                                                </td>
+                                                <td class="text-center fw-bold score-cell">
+                                                    {% if isFinished %}
+                                                        <small class="d-block mb-1"><span class="badge text-bg-secondary">Finalizado</span></small>
+                                                    {% elseif isInProgress %}
+                                                        <small class="d-block mb-1"><span class="badge text-bg-info">En curso</span></small>
+                                                    {% endif %}
+                                                    {% if hasLoadedScore %}
+                                                        {{ fixture.homeScore }} - {{ fixture.awayScore }}
+                                                    {% else %}
+                                                        &nbsp;
+                                                    {% endif %}
+                                                    <small class="d-block text-body-secondary fw-normal mt-1 js-local-datetime kickoff-time" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</small>
+                                                </td>
+                                                <td class="fw-semibold text-end team-cell team-cell-away">
+                                                    {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} {{ fixture.awayTeam.code|flag_emoji }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="prediction-modal" id="{{ modalId }}" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="{{ modalId }}-title">
+                    <div class="prediction-modal__backdrop" data-close-predictions="{{ modalId }}"></div>
+                    <div class="prediction-modal__panel" role="document">
+                        <div class="prediction-modal__header d-flex justify-content-between align-items-center gap-2">
+                            <h3 class="h5 mb-0" id="{{ modalId }}-title">Predicciones Grupo {{ groupCode }}</h3>
+                            <button type="button" class="btn btn-outline-dark btn-sm" data-close-predictions="{{ modalId }}">Cerrar</button>
+                        </div>
+                        <div class="prediction-modal__body">
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Partido</th>
+                                            <th>Fecha</th>
+                                            <th>Usuario</th>
+                                            <th>Predicción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for prediction in predictionsByGroup[groupCode]|default([]) %}
+                                            <tr>
+                                                <td>
+                                                    {{ prediction.fixture.homeTeam.code|flag_emoji }} {{ prediction.fixture.homeTeam.code|country_name_es(prediction.fixture.homeTeam.name) }}
+                                                    vs
+                                                    {{ prediction.fixture.awayTeam.code|flag_emoji }} {{ prediction.fixture.awayTeam.code|country_name_es(prediction.fixture.awayTeam.name) }}
+                                                </td>
+                                                <td><span class="js-local-datetime" data-utc="{{ prediction.fixture.kickoffAt|date('c') }}">{{ prediction.fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
+                                                <td>{{ prediction.user.name }}</td>
+                                                <td><strong>{{ prediction.predictedHomeScore }} - {{ prediction.predictedAwayScore }}</strong></td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="text-center py-3">No hay predicciones para este grupo.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info mb-0">No hay partidos cargados todavía.</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        (() => {
+            if (window.__groupPredictionsModalBound) {
+                return;
+            }
+            window.__groupPredictionsModalBound = true;
+
+            const openModal = (id) => {
+                const modal = document.getElementById(id);
+                if (!modal) {
+                    return;
+                }
+
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('has-open-modal');
+            };
+
+            const closeModal = (id) => {
+                const modal = document.getElementById(id);
+                if (!modal) {
+                    return;
+                }
+
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+
+                if (!document.querySelector('.prediction-modal.is-open')) {
+                    document.body.classList.remove('has-open-modal');
+                }
+            };
+
+            document.addEventListener('click', (event) => {
+                const openTrigger = event.target.closest('[data-open-predictions]');
+                if (openTrigger) {
+                    openModal(openTrigger.dataset.openPredictions);
+                    return;
+                }
+
+                const closeTrigger = event.target.closest('[data-close-predictions]');
+                if (closeTrigger) {
+                    closeModal(closeTrigger.dataset.closePredictions);
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') {
+                    return;
+                }
+
+                document.querySelectorAll('.prediction-modal.is-open').forEach((modal) => {
+                    closeModal(modal.id);
+                });
+            });
+        })();
+    </script>
+{% endblock %}
