@@ -24,7 +24,11 @@ class RequireHttpsSubscriber implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
-        if ($request->isSecure()) {
+        $forwardedProto = strtolower(trim(explode(',', (string) $request->headers->get('x-forwarded-proto', ''))[0] ?? ''));
+
+        // Render terminates TLS at the edge and forwards plain HTTP to the container.
+        // Respect forwarded proto to avoid redirect loops in production.
+        if ($request->isSecure() || $forwardedProto === 'https') {
             return;
         }
 
