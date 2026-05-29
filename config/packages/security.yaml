@@ -24,13 +24,15 @@ security:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
+                default_target_path: app_home
+                always_use_default_target_path: true
 
             login_throttling:
                 max_attempts: 5
                 interval: '15 minutes'
 
             logout:
-                path: app_logout
+                path: /auth/logout
                 target: app_home
 
             # Activate different ways to authenticate:
