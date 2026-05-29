@@ -24,17 +24,16 @@ class RequireHttpsSubscriber implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
-        $forwardedProto = strtolower(trim(explode(',', (string) $request->headers->get('x-forwarded-proto', ''))[0] ?? ''));
+        $hasForwardedProto = $request->headers->has('x-forwarded-proto');
 
-        // Render terminates TLS at the edge and forwards plain HTTP to the container.
-        // Respect forwarded proto to avoid redirect loops in production.
-        if ($request->isSecure() || $forwardedProto === 'https') {
+        if ($request->isSecure()) {
             return;
         }
 
-        // If the proxy header is missing, do not force a redirect. This avoids
-        // loops on platforms where the app only sees internal HTTP traffic.
-        if ($forwardedProto === '') {
+        // On managed platforms (OpenChoreo, Render, etc.), TLS usually terminates
+        // at the edge and proxy headers may not map 1:1 to the public scheme.
+        // If a forwarded proto header exists, skip app-level HTTPS redirects.
+        if ($hasForwardedProto) {
             return;
         }
 
