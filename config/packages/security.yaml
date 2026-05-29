@@ -24,7 +24,7 @@ security:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
-                default_target_path: app_home
+                default_target_path: /
                 always_use_default_target_path: true
 
             login_throttling:
@@ -33,7 +33,7 @@ security:
 
             logout:
                 path: /auth/logout
-                target: app_home
+                target: /
 
             # Activate different ways to authenticate:
             # https://symfony.com/doc/current/security.html#the-firewall
