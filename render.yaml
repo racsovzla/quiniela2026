@@ -23,13 +23,5 @@ services:
         sync: false
       - key: MAILER_FROM_NAME
         value: Quiniela 2026
-      - key: GOOGLE_OAUTH_CLIENT_ID
-        sync: false
-      - key: GOOGLE_OAUTH_CLIENT_SECRET
-        sync: false
-      - key: RECAPTCHA3_KEY
-        sync: false
-      - key: RECAPTCHA3_SECRET
-        sync: false
       - key: MESSENGER_TRANSPORT_DSN
         value: sync://

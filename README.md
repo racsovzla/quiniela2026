@@ -4,9 +4,8 @@ Implementacion inicial MVP.
 
 ## Incluye hoy
 
-- Registro por correo + password con reCAPTCHA v3.
+- Registro por correo + password con captcha matematico local.
 - Verificacion por codigo de 6 digitos enviado por correo.
-- Login por Google OAuth2.
 - Estado de usuario pendiente/aprobado (sin rechazo definitivo).
 - Predicciones por partido con bloqueo de edicion 5 minutos antes del kickoff (UTC).
 - Leaderboard con puntaje 3/1/0 y desempate por:
@@ -43,10 +42,6 @@ Implementacion inicial MVP.
 ## Configuracion rapida
 
 1. Copia `.env.local.example` a `.env.local` y ajusta variables:
-    - GOOGLE_OAUTH_CLIENT_ID
-    - GOOGLE_OAUTH_CLIENT_SECRET
-    - RECAPTCHA3_KEY
-    - RECAPTCHA3_SECRET
     - MAILER_FROM_EMAIL
     - MAILER_FROM_NAME
 2. Instala dependencias:
@@ -244,8 +239,6 @@ Este repo ya incluye `Dockerfile`, `.dockerignore` y `render.yaml` para desplieg
   - `DATABASE_URL` (Postgres)
   - `MAILER_DSN` (SMTP por puerto permitido, ej. 2525)
   - `MAILER_FROM_EMAIL`, `MAILER_FROM_NAME`
-  - `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`
-  - `RECAPTCHA3_KEY`, `RECAPTCHA3_SECRET`
 5. Despliega.
 6. Abre shell/console y ejecuta:
 
@@ -257,16 +250,12 @@ php bin/console app:import-group-fixtures data/worldcup2026_group_fixtures.csv -
 php bin/console app:create-admin "Admin" "admin@tu-dominio.com" "PasswordSegura2026!"
 ```
 
-7. En Google OAuth actualiza redirect URI al dominio Render: `https://<tu-servicio>.onrender.com/connect/google/check`.
-8. En reCAPTCHA agrega el dominio Render permitido.
-
 ### Verificacion rapida
 
 1. Registro por correo completo.
-2. Login Google funcionando.
-3. Crear y bloquear predicciones segun ventana de tiempo.
-4. Leaderboard responde.
-5. Prueba cold start (15+ min inactivo) para validar UX real en free tier.
+2. Crear y bloquear predicciones segun ventana de tiempo.
+3. Leaderboard responde.
+4. Prueba cold start (15+ min inactivo) para validar UX real en free tier.
 
 ## Siguiente iteracion recomendada
 

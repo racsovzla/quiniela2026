@@ -37,7 +37,24 @@ class AuthController extends AbstractController
         }
 
         $user = new User();
-        $form = $this->createForm(RegistrationFormType::class, $user);
+        $session = $request->getSession();
+        $captchaQuestion = (string) $session->get('register_captcha_question', '');
+        $captchaExpectedAnswer = (string) $session->get('register_captcha_expected_answer', '');
+
+        if ($captchaQuestion === '' || $captchaExpectedAnswer === '' || !$request->isMethod('POST')) {
+            $left = random_int(1, 9);
+            $right = random_int(1, 9);
+            $captchaQuestion = sprintf('Captcha: ¿Cuánto es %d + %d?', $left, $right);
+            $captchaExpectedAnswer = (string) ($left + $right);
+
+            $session->set('register_captcha_question', $captchaQuestion);
+            $session->set('register_captcha_expected_answer', $captchaExpectedAnswer);
+        }
+
+        $form = $this->createForm(RegistrationFormType::class, $user, [
+            'captcha_question' => $captchaQuestion,
+            'captcha_expected_answer' => $captchaExpectedAnswer,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -53,6 +70,9 @@ class AuthController extends AbstractController
 
             $entityManager->persist($user);
             $entityManager->flush();
+
+            $session->remove('register_captcha_question');
+            $session->remove('register_captcha_expected_answer');
 
             $this->sendVerificationEmail($mailer, $user, $verificationCode);
             $this->addFlash('success', 'Registro completado. Revisa tu correo y valida el código.');

@@ -42,9 +42,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(min: 2, max: 120)]
     private string $name;
 
-    #[ORM\Column(length: 190, nullable: true, unique: true)]
-    private ?string $googleId = null;
-
     #[ORM\Column]
     private bool $isVerified = false;
 
@@ -158,18 +155,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setName(string $name): static
     {
         $this->name = trim($name);
-
-        return $this;
-    }
-
-    public function getGoogleId(): ?string
-    {
-        return $this->googleId;
-    }
-
-    public function setGoogleId(?string $googleId): static
-    {
-        $this->googleId = $googleId;
 
         return $this;
     }

@@ -1487,8 +1487,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     twig_extra?: TwigExtraConfig,
  *     security?: SecurityConfig,
  *     monolog?: MonologConfig,
- *     karser_recaptcha3?: KarserRecaptcha3Config,
- *     knpu_oauth2_client?: KnpuOauth2ClientConfig,
  *     symfonycasts_verify_email?: SymfonycastsVerifyEmailConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
@@ -1506,8 +1504,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
  *         maker?: MakerConfig,
- *         karser_recaptcha3?: KarserRecaptcha3Config,
- *         knpu_oauth2_client?: KnpuOauth2ClientConfig,
  *         symfonycasts_verify_email?: SymfonycastsVerifyEmailConfig,
  *     },
  *     "when@prod"?: array{
@@ -1523,8 +1519,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
- *         karser_recaptcha3?: KarserRecaptcha3Config,
- *         knpu_oauth2_client?: KnpuOauth2ClientConfig,
  *         symfonycasts_verify_email?: SymfonycastsVerifyEmailConfig,
  *     },
  *     "when@test"?: array{
@@ -1541,8 +1535,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
- *         karser_recaptcha3?: KarserRecaptcha3Config,
- *         knpu_oauth2_client?: KnpuOauth2ClientConfig,
  *         symfonycasts_verify_email?: SymfonycastsVerifyEmailConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias

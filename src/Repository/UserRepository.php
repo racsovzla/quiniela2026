@@ -25,11 +25,6 @@ class UserRepository extends ServiceEntityRepository
         }
     }
 
-    public function findByGoogleId(string $googleId): ?User
-    {
-        return $this->findOneBy(['googleId' => $googleId]);
-    }
-
     public function findByEmail(string $email): ?User
     {
         return $this->findOneBy(['email' => mb_strtolower(trim($email))]);
