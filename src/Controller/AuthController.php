@@ -21,6 +21,8 @@ use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
+use Symfony\Component\Security\Http\Authenticator\FormLoginAuthenticator;
 
 class AuthController extends AbstractController
 {
@@ -125,8 +127,12 @@ class AuthController extends AbstractController
     #[Route('/verify/{token}', name: 'app_verify_link', methods: ['GET'])]
     public function verifyLink(
         string $token,
+        Request $request,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager,
+        UserAuthenticatorInterface $userAuthenticator,
+        #[Autowire(service: 'security.authenticator.form_login.main')]
+        FormLoginAuthenticator $formLoginAuthenticator,
     ): Response {
         $user = $userRepository->findOneBy(['emailVerificationCode' => $token]);
 
@@ -159,7 +165,14 @@ class AuthController extends AbstractController
 
         $this->addFlash('success', '¡Correo verificado! Ya puedes cargar tus predicciones.');
 
-        return $this->redirectToRoute('app_predictions');
+        // Log the user in automatically — no manual login step required after verification
+        $response = $userAuthenticator->authenticateUser(
+            $user,
+            $formLoginAuthenticator,
+            $request,
+        );
+
+        return $response ?? $this->redirectToRoute('app_predictions');
     }
 
     #[Route('/verify/resend', name: 'app_verify_resend', methods: ['POST'])]

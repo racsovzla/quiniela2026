@@ -82,9 +82,9 @@ class RegistrationLoginFlowTest extends WebTestCase
     }
 
     /**
-     * Step 2: Email verification link marks user as verified.
+     * Step 2: Email verification link marks user as verified AND logs them in automatically.
      */
-    public function testEmailVerificationLinkVerifiesUser(): void
+    public function testEmailVerificationLinkVerifiesAndLogsIn(): void
     {
         $client = static::createClient();
 
@@ -107,6 +107,12 @@ class RegistrationLoginFlowTest extends WebTestCase
         $user = $em->getRepository(User::class)->findOneBy(['email' => self::TEST_EMAIL]);
         self::assertTrue($user->isVerified(), 'User must be verified after clicking the link');
         self::assertNull($user->getEmailVerificationCode(), 'Token must be cleared after verification');
+
+        // Follow the redirect — user must be logged in (land on predictions, not login)
+        $client->followRedirect();
+        self::assertResponseIsSuccessful();
+        $finalUrl = parse_url((string) $client->getRequest()->getUri(), PHP_URL_PATH);
+        self::assertNotEquals('/login', $finalUrl, 'After verification, user must NOT land on login page — should be auto-logged in');
     }
 
     /**
