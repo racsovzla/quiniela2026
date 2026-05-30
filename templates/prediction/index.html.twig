@@ -6,13 +6,19 @@
 <h1 class="h3 mb-3">Predicciones - Fase de Grupos</h1>
 
 {% if not canParticipate %}
-    <div class="alert alert-warning">Tu cuenta debe estar verificada y aprobada para guardar predicciones.</div>
+    <div class="alert alert-warning">Debes verificar tu correo para guardar predicciones.</div>
 {% elseif paymentValidatedAt is null %}
-    <div class="alert alert-info">Ya puedes cargar predicciones, pero sumarás puntos solo desde que el admin valide tu pago.</div>
+    <div class="alert alert-info">Ya puedes cargar predicciones. Sumarás puntos solo a partir de que el admin valide tu pago.</div>
 {% else %}
     <div class="alert alert-success">Pago validado. Sumas puntos para partidos con kickoff desde {{ paymentValidatedAt|date('Y-m-d H:i') }} UTC.</div>
 {% endif %}
 
+{% if canParticipate %}
+<div class="d-flex justify-content-end mb-2 gap-2 align-items-center">
+    <span id="save-all-feedback" class="text-success fw-semibold" aria-live="polite"></span>
+    <button id="btn-save-all" class="btn btn-success">Guardar todo</button>
+</div>
+{% endif %}
 <div class="table-responsive bg-white border rounded-3 shadow-sm">
 <table class="table align-middle mb-0">
     <thead>
@@ -34,12 +40,13 @@
             <td>{{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_emoji }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</td>
             <td><span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
             <td>
-                <form class="d-flex gap-2" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
+                <form class="d-flex gap-2 prediction-form" data-turbo="false" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('save_prediction_' ~ fixture.id) }}">
                     <input type="number" min="0" name="home" class="form-control" style="max-width:90px" value="{{ p ? p.predictedHomeScore : '' }}" {{ formDisabled ? 'disabled' : '' }}>
                     <span class="pt-2">-</span>
                     <input type="number" min="0" name="away" class="form-control" style="max-width:90px" value="{{ p ? p.predictedAwayScore : '' }}" {{ formDisabled ? 'disabled' : '' }}>
-                    <button class="btn btn-primary btn-sm" {{ formDisabled ? 'disabled' : '' }}>Guardar</button>
+                    <button class="btn btn-sm {{ p ? 'btn-outline-primary' : 'btn-primary' }}" {{ formDisabled ? 'disabled' : '' }}>{{ p ? 'Editar' : 'Guardar' }}</button>
+                    <span class="prediction-feedback pt-2" aria-live="polite"></span>
                 </form>
             </td>
             <td>
@@ -98,6 +105,88 @@
             updateCountdowns();
             setInterval(updateCountdowns, 30000);
             document.addEventListener('turbo:load', updateCountdowns);
+
+            async function saveSingleForm(form) {
+                const btn = form.querySelector('button');
+                const feedback = form.querySelector('.prediction-feedback');
+                const prevText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Guardando…';
+                feedback.textContent = '';
+                feedback.className = 'prediction-feedback pt-2';
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        btn.textContent = 'Editar';
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-primary');
+                        feedback.textContent = '✓';
+                        feedback.classList.add('text-success');
+                        setTimeout(() => { feedback.textContent = ''; feedback.className = 'prediction-feedback pt-2'; }, 3000);
+                        return true;
+                    } else {
+                        btn.textContent = prevText;
+                        feedback.textContent = data.error ?? 'Error';
+                        feedback.classList.add('text-danger');
+                        setTimeout(() => { feedback.textContent = ''; feedback.className = 'prediction-feedback pt-2'; }, 3000);
+                        return false;
+                    }
+                } catch {
+                    btn.textContent = prevText;
+                    feedback.textContent = 'Error de red';
+                    feedback.classList.add('text-danger');
+                    setTimeout(() => { feedback.textContent = ''; feedback.className = 'prediction-feedback pt-2'; }, 3000);
+                    return false;
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+
+            document.addEventListener('submit', async (e) => {
+                if (!e.target.classList.contains('prediction-form')) return;
+                e.preventDefault();
+                await saveSingleForm(e.target);
+            });
+
+            document.addEventListener('click', async (e) => {
+                if (e.target.id !== 'btn-save-all') return;
+                const btnSaveAll = e.target;
+                const forms = [...document.querySelectorAll('.prediction-form')].filter((form) => {
+                    const home = form.querySelector('input[name="home"]');
+                    const away = form.querySelector('input[name="away"]');
+                    // skip forms with natively disabled inputs (window closed)
+                    if (home && home.hasAttribute('disabled')) return false;
+                    return home && away && home.value !== '' && away.value !== '';
+                });
+                if (forms.length === 0) {
+                    const fb = document.getElementById('save-all-feedback');
+                    fb.textContent = 'Ningún partido con marcador completo o ventana abierta.';
+                    fb.className = 'text-warning fw-semibold';
+                    setTimeout(() => { fb.textContent = ''; fb.className = 'text-success fw-semibold'; }, 3000);
+                    return;
+                }
+                btnSaveAll.disabled = true;
+                btnSaveAll.textContent = 'Guardando…';
+                const results = await Promise.all(forms.map(saveSingleForm));
+                const saved = results.filter(Boolean).length;
+                const failed = results.length - saved;
+                btnSaveAll.disabled = false;
+                btnSaveAll.textContent = 'Guardar todo';
+                const fb = document.getElementById('save-all-feedback');
+                if (failed === 0) {
+                    fb.textContent = `✓ ${saved} predicción${saved !== 1 ? 'es' : ''} guardada${saved !== 1 ? 's' : ''}`;
+                    fb.className = 'text-success fw-semibold';
+                } else {
+                    fb.textContent = `${saved} guardadas, ${failed} con error`;
+                    fb.className = 'text-warning fw-semibold';
+                }
+                setTimeout(() => { fb.textContent = ''; fb.className = 'text-success fw-semibold'; }, 4000);
+            });
         })();
     </script>
 {% endblock %}

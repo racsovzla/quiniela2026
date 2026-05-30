@@ -1,28 +1,46 @@
-<h2>Predicciones publicadas</h2>
-<p>Hola {{ recipient.name }},</p>
-<p>Ya se cerró la edición para este partido:</p>
-<p><strong>{{ homeTeamName }} vs {{ awayTeamName }}</strong></p>
-<p>Inicio: {{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</p>
+{% extends 'emails/layout.html.twig' %}
 
-{% if summaryRows is not empty %}
-    <table cellpadding="8" cellspacing="0" border="1" style="border-collapse: collapse; width: 100%;">
-        <thead>
-            <tr>
-                <th align="left">Participante</th>
-                <th align="left">Predicción</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in summaryRows %}
-                <tr>
-                    <td>{{ row.name }}</td>
-                    <td><strong>{{ row.homeScore }} - {{ row.awayScore }}</strong></td>
-                </tr>
-            {% endfor %}
-        </tbody>
+{% block body %}
+    <h2 style="margin:0 0 24px 0;font-size:24px;font-weight:800;color:#ffffff;">Predicciones publicadas</h2>
+
+    <!-- Match card -->
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
+        <tr>
+            <td style="background-color:#13283a;border:1px solid #224057;border-top:3px solid #2ec4ff;border-radius:8px;padding:20px 24px;">
+                <p style="margin:0 0 4px 0;font-size:11px;color:#9cb3c5;letter-spacing:2px;text-transform:uppercase;">Partido cerrado</p>
+                <p style="margin:0 0 8px 0;font-size:22px;font-weight:800;color:#ffffff;">{{ homeTeamName }} vs {{ awayTeamName }}</p>
+                <p style="margin:0;font-size:13px;color:#9cb3c5;">&#128197; Inicio: {{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</p>
+            </td>
+        </tr>
     </table>
-{% else %}
-    <p>No hubo predicciones cargadas para este partido.</p>
-{% endif %}
 
-<p>Quiniela 2026</p>
+    {% if summaryRows is not empty %}
+        <p style="margin:0 0 12px 0;font-size:14px;color:#e8f1f7;font-weight:600;">Predicciones de los participantes:</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border-radius:8px;overflow:hidden;">
+            <thead>
+                <tr style="background-color:#07121a;">
+                    <th align="left" style="padding:10px 14px;font-size:12px;color:#9cb3c5;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #224057;">Participante</th>
+                    <th align="center" style="padding:10px 14px;font-size:12px;color:#9cb3c5;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #224057;">Predicción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in summaryRows %}
+                    <tr style="background-color:{{ loop.index is odd ? '#0e1d2a' : '#13283a' }};">
+                        <td style="padding:10px 14px;font-size:14px;color:#e8f1f7;border-bottom:1px solid #1a2f42;">{{ row.name }}</td>
+                        <td align="center" style="padding:10px 14px;border-bottom:1px solid #1a2f42;">
+                            <span style="font-size:16px;font-weight:800;color:#00a86b;font-family:'Courier New',monospace;">{{ row.homeScore }} – {{ row.awayScore }}</span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+                <td style="background-color:#13283a;border:1px solid #224057;border-radius:6px;padding:16px;">
+                    <p style="margin:0;font-size:14px;color:#9cb3c5;text-align:center;">No hubo predicciones cargadas para este partido.</p>
+                </td>
+            </tr>
+        </table>
+    {% endif %}
+{% endblock %}

@@ -48,7 +48,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private bool $isApproved = false;
 
-    #[ORM\Column(length: 6, nullable: true)]
+    #[ORM\Column(length: 64, nullable: true)]
     private ?string $emailVerificationCode = null;
 
     #[ORM\Column(nullable: true)]

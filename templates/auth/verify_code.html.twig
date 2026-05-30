@@ -1,36 +1,26 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Verificar correo{% endblock %}
+{% block title %}Revisa tu correo{% endblock %}
 
 {% block body %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm text-center">
             <div class="card-body p-4">
-                <h2 class="h4 mb-3">Validar código</h2>
-                <p class="text-muted">Ingresa el correo y el código de 6 dígitos que llegó por email.</p>
-                <form method="post">
-                    <input type="hidden" name="_token" value="{{ csrf_token('verify_code') }}">
-                    <div class="mb-3">
-                        <label class="form-label">Correo</label>
-                        <input type="email" name="email" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Código</label>
-                        <input type="text" name="code" maxlength="6" class="form-control" required>
-                    </div>
-                    <button class="btn btn-primary w-100">Verificar</button>
-                </form>
+                <div style="font-size:3rem;margin-bottom:0.5rem;">📧</div>
+                <h2 class="h4 mb-2">Revisa tu correo</h2>
+                <p class="text-muted">Te enviamos un enlace de verificación. Haz clic en él para activar tu cuenta.</p>
+                <p class="text-muted small">El enlace expira en 30 minutos. Si no lo encuentras, revisa tu carpeta de spam.</p>
 
                 <hr>
-                <p class="text-muted mb-2">Si tu código expiró, solicita uno nuevo:</p>
-                <form method="post" action="{{ path('app_verify_resend') }}" class="d-flex gap-2 align-items-end">
+
+                <p class="text-muted mb-2 small">¿No te llegó o expiró? Solicita uno nuevo:</p>
+                <form method="post" action="{{ path('app_verify_resend') }}" class="d-flex gap-2 align-items-end justify-content-center">
                     <input type="hidden" name="_token" value="{{ csrf_token('verify_resend') }}">
-                    <div class="flex-grow-1">
-                        <label class="form-label">Correo</label>
-                        <input type="email" name="email" class="form-control" required>
+                    <div class="flex-grow-1" style="max-width:260px;">
+                        <input type="email" name="email" class="form-control" placeholder="Tu correo" required>
                     </div>
-                    <button class="btn btn-outline-dark">Reenviar</button>
+                    <button class="btn btn-outline-primary">Reenviar enlace</button>
                 </form>
             </div>
         </div>

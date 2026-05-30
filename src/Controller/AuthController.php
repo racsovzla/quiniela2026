@@ -6,22 +6,29 @@ use App\Entity\User;
 use App\Form\RegistrationFormType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class AuthController extends AbstractController
 {
-    public function __construct(private readonly Address $mailerFromAddress)
+    public function __construct(
+        private readonly Address $mailerFromAddress,
+        private readonly LoggerInterface $logger,
+        private readonly UrlGeneratorInterface $urlGenerator,
+    )
     {
     }
 
@@ -58,13 +65,13 @@ class AuthController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $plainPassword = (string) $form->get('plainPassword')->getData();
-            $verificationCode = (string) random_int(100000, 999999);
+            $plainPassword = (string) $form->get('plainPassword')->get('first')->getData();
+            $verificationToken = bin2hex(random_bytes(32));
             $user
                 ->setPassword($passwordHasher->hashPassword($user, $plainPassword))
                 ->setIsVerified(false)
                 ->setIsApproved(false)
-                ->setEmailVerificationCode($verificationCode)
+                ->setEmailVerificationCode($verificationToken)
                 ->setEmailVerificationExpiresAt((new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify('+30 minutes'))
                 ->setRoles(['ROLE_USER']);
 
@@ -74,8 +81,13 @@ class AuthController extends AbstractController
             $session->remove('register_captcha_question');
             $session->remove('register_captcha_expected_answer');
 
-            $this->sendVerificationEmail($mailer, $user, $verificationCode);
-            $this->addFlash('success', 'Registro completado. Revisa tu correo y valida el código.');
+            $verificationUrl = $this->urlGenerator->generate(
+                'app_verify_link',
+                ['token' => $verificationToken],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            );
+            $this->sendVerificationEmail($mailer, $user, $verificationUrl);
+            $this->addFlash('success', 'Registro completado. Revisa tu correo y haz clic en el enlace de verificación.');
 
             return $this->redirectToRoute('app_verify_code');
         }
@@ -104,68 +116,50 @@ class AuthController extends AbstractController
         throw new \LogicException('Handled by firewall logout.');
     }
 
-    #[Route('/verify/code', name: 'app_verify_code', methods: ['GET', 'POST'])]
-    public function verifyCode(
-        Request $request,
+    #[Route('/verify/code', name: 'app_verify_code', methods: ['GET'])]
+    public function verifyCode(): Response
+    {
+        return $this->render('auth/verify_code.html.twig');
+    }
+
+    #[Route('/verify/{token}', name: 'app_verify_link', methods: ['GET'])]
+    public function verifyLink(
+        string $token,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager,
-        #[Autowire(service: 'limiter.verify_code')] RateLimiterFactory $verifyCodeLimiter,
-    ): Response
-    {
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('verify_code', (string) $request->request->get('_token'))) {
-                $this->addFlash('error', 'Token inválido. Intenta de nuevo.');
+    ): Response {
+        $user = $userRepository->findOneBy(['emailVerificationCode' => $token]);
 
-                return $this->redirectToRoute('app_verify_code');
-            }
+        if (!$user instanceof User) {
+            $this->addFlash('error', 'El enlace de verificación es inválido.');
 
-            $email = (string) $request->request->get('email');
-            $code = (string) $request->request->get('code');
-            $limiterKey = mb_strtolower(trim($email)).'|'.(string) $request->getClientIp();
-            $limit = $verifyCodeLimiter->create($limiterKey)->consume(1);
+            return $this->redirectToRoute('app_verify_code');
+        }
 
-            if (!$limit->isAccepted()) {
-                $retryAt = $limit->getRetryAfter();
-                $seconds = max(1, $retryAt->getTimestamp() - time());
-                $this->addFlash('error', sprintf('Demasiados intentos. Espera %d segundos e intenta de nuevo.', $seconds));
-
-                return $this->redirectToRoute('app_verify_code');
-            }
-
-            $user = $userRepository->findByEmail($email);
-            if (!$user instanceof User || $user->getEmailVerificationCode() !== trim($code)) {
-                $this->addFlash('error', 'Correo o código inválido.');
-
-                return $this->redirectToRoute('app_verify_code');
-            }
-
-            $expiresAt = $user->getEmailVerificationExpiresAt();
-            $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-            if (!$expiresAt || $expiresAt < $now) {
-                $this->addFlash('error', 'El código expiró. Solicita reenvío de código para continuar.');
-
-                return $this->redirectToRoute('app_verify_code');
-            }
-
-            if ($user->isVerified()) {
-                $this->addFlash('success', 'Tu correo ya está verificado.');
-
-                return $this->redirectToRoute('app_login');
-            }
-
-            $user
-                ->setIsVerified(true)
-                ->setEmailVerificationCode(null)
-                ->setEmailVerificationExpiresAt(null);
-
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Correo verificado. Falta aprobación del admin para participar.');
+        if ($user->isVerified()) {
+            $this->addFlash('success', 'Tu correo ya estaba verificado. Inicia sesión.');
 
             return $this->redirectToRoute('app_login');
         }
 
-        return $this->render('auth/verify_code.html.twig');
+        $expiresAt = $user->getEmailVerificationExpiresAt();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        if (!$expiresAt || $expiresAt < $now) {
+            $this->addFlash('error', 'El enlace expiró. Solicita uno nuevo.');
+
+            return $this->redirectToRoute('app_verify_code');
+        }
+
+        $user
+            ->setIsVerified(true)
+            ->setEmailVerificationCode(null)
+            ->setEmailVerificationExpiresAt(null);
+
+        $entityManager->flush();
+
+        $this->addFlash('success', '¡Correo verificado! Ya puedes cargar tus predicciones.');
+
+        return $this->redirectToRoute('app_predictions');
     }
 
     #[Route('/verify/resend', name: 'app_verify_resend', methods: ['POST'])]
@@ -208,31 +202,48 @@ class AuthController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $verificationCode = (string) random_int(100000, 999999);
+        $verificationToken = bin2hex(random_bytes(32));
         $user
-            ->setEmailVerificationCode($verificationCode)
+            ->setEmailVerificationCode($verificationToken)
             ->setEmailVerificationExpiresAt((new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify('+30 minutes'));
 
         $entityManager->flush();
 
-        $this->sendVerificationEmail($mailer, $user, $verificationCode);
-        $this->addFlash('success', 'Te enviamos un nuevo código de verificación.');
+        $verificationUrl = $this->urlGenerator->generate(
+            'app_verify_link',
+            ['token' => $verificationToken],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
+        $this->sendVerificationEmail($mailer, $user, $verificationUrl);
+        $this->addFlash('success', 'Te enviamos un nuevo enlace de verificación. Revisa tu correo.');
 
         return $this->redirectToRoute('app_verify_code');
     }
 
-    private function sendVerificationEmail(MailerInterface $mailer, User $user, string $verificationCode): void
+    private function sendVerificationEmail(MailerInterface $mailer, User $user, string $verificationUrl): void
     {
         $email = (new TemplatedEmail())
             ->from($this->mailerFromAddress)
             ->to($user->getEmail())
-            ->subject('Tu código de verificación - Quiniela 2026')
+            ->subject('Verifica tu correo - Quiniela 2026')
             ->htmlTemplate('emails/verify_email.html.twig')
             ->context([
                 'user' => $user,
-                'verificationCode' => $verificationCode,
+                'verificationUrl' => $verificationUrl,
             ]);
 
-        $mailer->send($email);
+        try {
+            $mailer->send($email);
+            $this->logger->info('Verification email sent.', [
+                'to' => $user->getEmail(),
+            ]);
+        } catch (TransportExceptionInterface $exception) {
+            $this->logger->error('Verification email failed.', [
+                'to' => $user->getEmail(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            throw $exception;
+        }
     }
 }

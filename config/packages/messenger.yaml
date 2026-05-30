@@ -32,3 +32,9 @@ when@prod:
                 Symfony\Component\Mailer\Messenger\SendEmailMessage: sync
                 Symfony\Component\Notifier\Message\ChatMessage: sync
                 Symfony\Component\Notifier\Message\SmsMessage: sync
+
+when@dev:
+    framework:
+        messenger:
+            routing:
+                Symfony\Component\Mailer\Messenger\SendEmailMessage: sync

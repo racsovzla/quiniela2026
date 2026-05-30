@@ -6,8 +6,11 @@ use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\Length;
@@ -22,15 +25,30 @@ class RegistrationFormType extends AbstractType
         $builder
             ->add('name', TextType::class)
             ->add('email', EmailType::class)
-            ->add('plainPassword', PasswordType::class, [
+            ->add('plainPassword', RepeatedType::class, [
+                'type' => PasswordType::class,
                 'mapped' => false,
-                'attr' => ['autocomplete' => 'new-password'],
+                'invalid_message' => 'Las contraseñas no coinciden.',
+                'first_options' => [
+                    'label' => false,
+                    'attr' => [
+                        'autocomplete' => 'new-password',
+                        'minlength' => 8,
+                    ],
+                ],
+                'second_options' => [
+                    'label' => false,
+                    'attr' => [
+                        'autocomplete' => 'new-password',
+                        'minlength' => 8,
+                    ],
+                ],
                 'constraints' => [
                     new NotBlank(),
-                    new Length(min: 12, max: 255),
+                    new Length(min: 8, max: 255),
                     new Regex(
-                        pattern: '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$/',
-                        message: 'Usa al menos una minúscula, una mayúscula, un número y un símbolo.'
+                        pattern: '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                        message: 'Usa al menos una minúscula, una mayúscula y un número.'
                     ),
                 ],
             ])
@@ -58,6 +76,11 @@ class RegistrationFormType extends AbstractType
                     }),
                 ],
             ]);
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        $view->vars['captcha_question'] = $options['captcha_question'];
     }
 
     public function configureOptions(OptionsResolver $resolver): void

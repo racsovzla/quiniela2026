@@ -24,7 +24,34 @@
 
                 <div class="auth-field">
                     {{ form_label(registrationForm.plainPassword, 'Contraseña', {label_attr: {class: 'form-label'}}) }}
-                    {{ form_widget(registrationForm.plainPassword, {attr: {class: 'form-control', autocomplete: 'new-password', placeholder: 'Mínimo 12 caracteres'}}) }}
+                    <div class="password-field">
+                        {{ form_widget(registrationForm.plainPassword.first, {attr: {class: 'form-control', autocomplete: 'new-password', placeholder: 'Mínimo 8 caracteres'}}) }}
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            data-toggle-password="{{ registrationForm.plainPassword.first.vars.id }}"
+                            aria-label="Mostrar contraseña"
+                            title="Mostrar u ocultar contraseña"
+                        ><span aria-hidden="true">👁</span></button>
+                    </div>
+                    <small class="text-body-secondary d-block mt-1">Debe tener al menos 8 caracteres e incluir mayúscula, minúscula y número.</small>
+                    {{ form_errors(registrationForm.plainPassword.first) }}
+                </div>
+
+                <div class="auth-field">
+                    <label for="{{ registrationForm.plainPassword.second.vars.id }}" class="form-label">Confirmar contraseña</label>
+                    <div class="password-field">
+                        {{ form_widget(registrationForm.plainPassword.second, {attr: {class: 'form-control', autocomplete: 'new-password', placeholder: 'Repite tu contraseña'}}) }}
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            data-toggle-password="{{ registrationForm.plainPassword.second.vars.id }}"
+                            aria-label="Mostrar confirmación de contraseña"
+                            title="Mostrar u ocultar contraseña"
+                        ><span aria-hidden="true">👁</span></button>
+                    </div>
+                    <small id="password-match-feedback" class="d-block mt-1"></small>
+                    {{ form_errors(registrationForm.plainPassword.second) }}
                     {{ form_errors(registrationForm.plainPassword) }}
                 </div>
 
@@ -35,10 +62,100 @@
                 </div>
 
                 <button class="btn btn-primary w-100 mt-2">Crear cuenta</button>
-            {{ form_end(registrationForm, {render_rest: false}) }}
+            {{ form_end(registrationForm) }}
             <p class="auth-footnote mt-3 mb-0 text-center">¿Ya tienes cuenta? <a href="{{ path('app_login') }}">Entrar</a></p>
         </div>
     </div>
     <div class="auth-glow" aria-hidden="true"></div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        (() => {
+            const bindToggleListenerOnce = () => {
+                if (document.documentElement.dataset.passwordToggleBound === '1') {
+                    return;
+                }
+
+                document.addEventListener('click', (event) => {
+                    const button = event.target.closest('[data-toggle-password]');
+                    if (!button) {
+                        return;
+                    }
+
+                    const targetId = button.getAttribute('data-toggle-password');
+                    if (!targetId) {
+                        return;
+                    }
+
+                    const input = document.getElementById(targetId);
+                    if (!input) {
+                        return;
+                    }
+
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    button.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                    const icon = button.querySelector('span');
+                    if (icon) {
+                        icon.textContent = isPassword ? '🙈' : '👁';
+                    }
+                });
+
+                document.documentElement.dataset.passwordToggleBound = '1';
+            };
+
+            const initRegisterForm = () => {
+                const form = document.querySelector('form.auth-form');
+                if (!form || form.dataset.passwordValidationBound === '1') {
+                    return;
+                }
+
+                const password = form.querySelector('input[name="registration_form[plainPassword][first]"]');
+                const confirmPassword = form.querySelector('input[name="registration_form[plainPassword][second]"]');
+                const feedback = document.getElementById('password-match-feedback');
+                if (!password || !confirmPassword || !feedback) {
+                    return;
+                }
+
+                const validateMatch = () => {
+                    if (confirmPassword.value === '') {
+                        confirmPassword.setCustomValidity('');
+                        feedback.textContent = '';
+                        feedback.className = 'd-block mt-1';
+                        return;
+                    }
+
+                    if (password.value !== confirmPassword.value) {
+                        confirmPassword.setCustomValidity('Las contraseñas no coinciden.');
+                        feedback.textContent = 'Las contraseñas no coinciden.';
+                        feedback.className = 'd-block mt-1 text-danger';
+                        return;
+                    }
+
+                    confirmPassword.setCustomValidity('');
+                    feedback.textContent = 'Las contraseñas coinciden.';
+                    feedback.className = 'd-block mt-1 text-success';
+                };
+
+                password.addEventListener('input', validateMatch);
+                confirmPassword.addEventListener('input', validateMatch);
+                form.addEventListener('submit', () => {
+                    validateMatch();
+                });
+
+                form.dataset.passwordValidationBound = '1';
+            };
+
+            bindToggleListenerOnce();
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initRegisterForm);
+            } else {
+                initRegisterForm();
+            }
+            document.addEventListener('turbo:load', initRegisterForm);
+        })();
+    </script>
 {% endblock %}

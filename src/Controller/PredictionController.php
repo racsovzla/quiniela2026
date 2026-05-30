@@ -10,6 +10,7 @@ use App\Repository\PredictionRepository;
 use App\Service\PredictionWindowService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -59,7 +60,7 @@ class PredictionController extends AbstractController
             'predictionByFixture' => $predictionByFixture,
             'fixtureCanEdit' => $fixtureCanEdit,
             'fixtureDeadlineIso' => $fixtureDeadlineIso,
-            'canParticipate' => $user->isVerified() && $user->isApproved(),
+            'canParticipate' => $user->isVerified(),
             'paymentValidatedAt' => $user->getPaymentValidatedAt(),
         ]);
     }
@@ -72,29 +73,34 @@ class PredictionController extends AbstractController
         PredictionRepository $predictionRepository,
         EntityManagerInterface $entityManager,
         PredictionWindowService $predictionWindowService,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
 
+        $isAjax = $request->isXmlHttpRequest();
+
         if (!$this->isCsrfTokenValid('save_prediction_'.$fixture->getId(), (string) $request->request->get('_token'))) {
+            if ($isAjax) {
+                return new JsonResponse(['error' => 'CSRF inválido.'], 422);
+            }
             $this->addFlash('error', 'CSRF inválido.');
 
             return $this->redirectToRoute('app_predictions');
         }
 
         if (!$user->isVerified()) {
+            if ($isAjax) {
+                return new JsonResponse(['error' => 'Debes verificar tu correo para participar.'], 403);
+            }
             $this->addFlash('error', 'Debes verificar tu correo para participar.');
 
             return $this->redirectToRoute('app_predictions');
         }
 
-        if (!$user->isApproved()) {
-            $this->addFlash('error', 'Tu cuenta está pendiente de aprobación por admin.');
-
-            return $this->redirectToRoute('app_predictions');
-        }
-
         if (!$predictionWindowService->canEdit($fixture)) {
+            if ($isAjax) {
+                return new JsonResponse(['error' => 'No se puede editar. La ventana cerró 5 minutos antes del partido.'], 422);
+            }
             $this->addFlash('error', 'No se puede editar. La ventana cerró 5 minutos antes del partido.');
 
             return $this->redirectToRoute('app_predictions');
@@ -104,6 +110,9 @@ class PredictionController extends AbstractController
         $away = filter_var($request->request->get('away'), FILTER_VALIDATE_INT);
 
         if ($home === false || $away === false || $home < 0 || $away < 0) {
+            if ($isAjax) {
+                return new JsonResponse(['error' => 'Marcador inválido. Debe ser entero mayor o igual a 0.'], 422);
+            }
             $this->addFlash('error', 'Marcador inválido. Debe ser entero mayor o igual a 0.');
 
             return $this->redirectToRoute('app_predictions');
@@ -122,6 +131,10 @@ class PredictionController extends AbstractController
             ->setPredictedAwayScore((int) $away);
 
         $entityManager->flush();
+
+        if ($isAjax) {
+            return new JsonResponse(['success' => true]);
+        }
 
         $this->addFlash('success', 'Predicción guardada.');
 
