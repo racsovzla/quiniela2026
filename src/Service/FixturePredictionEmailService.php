@@ -51,26 +51,27 @@ class FixturePredictionEmailService
             $fixture->getAwayTeam()?->getName()
         );
 
-        $addresses = [];
+        $subject = sprintf('Predicciones publicadas: %s vs %s', $homeTeamName, $awayTeamName);
+        $sentCount = 0;
+
         foreach ($recipients as $recipient) {
-            $addresses[] = new Address($recipient->getEmail(), $recipient->getName());
+            $email = (new TemplatedEmail())
+                ->from($this->mailerFromAddress)
+                ->to(new Address($recipient->getEmail(), $recipient->getName()))
+                ->subject($subject)
+                ->htmlTemplate('emails/fixture_predictions_summary.html.twig')
+                ->context([
+                    'recipient' => $recipient,
+                    'fixture' => $fixture,
+                    'homeTeamName' => $homeTeamName,
+                    'awayTeamName' => $awayTeamName,
+                    'summaryRows' => $summaryRows,
+                ]);
+
+            $this->mailer->send($email);
+            ++$sentCount;
         }
 
-        $email = (new TemplatedEmail())
-            ->from($this->mailerFromAddress)
-            ->to(...$addresses)
-            ->subject(sprintf('Predicciones publicadas: %s vs %s', $homeTeamName, $awayTeamName))
-            ->htmlTemplate('emails/fixture_predictions_summary.html.twig')
-            ->context([
-                'recipient' => $recipients[0],
-                'fixture' => $fixture,
-                'homeTeamName' => $homeTeamName,
-                'awayTeamName' => $awayTeamName,
-                'summaryRows' => $summaryRows,
-            ]);
-
-        $this->mailer->send($email);
-
-        return count($addresses);
+        return $sentCount;
     }
 }

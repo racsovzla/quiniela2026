@@ -1,10 +1,22 @@
+# Triggered by cron-job.org (every 5 min) or manually from GitHub Actions UI.
+#
+# cron-job.org setup:
+#   URL:    https://api.github.com/repos/racsovzla/quiniela2026/actions/workflows/send-prediction-emails.yml/dispatches
+#   Method: POST
+#   Headers:
+#     Authorization: Bearer <GITHUB_PAT with actions:write>
+#     Accept: application/vnd.github+json
+#     X-GitHub-Api-Version: 2022-11-28
+#   Body (JSON): {"ref":"master"}
+#   Schedule: every 5 minutes
 name: Send due prediction emails
 
 on:
-  schedule:
-    # Every 5 minutes (GitHub Actions minimum interval).
-    - cron: '*/5 * * * *'
   workflow_dispatch:
+
+concurrency:
+  group: send-prediction-emails
+  cancel-in-progress: false
 
 jobs:
   send-due-prediction-emails:
