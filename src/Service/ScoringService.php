@@ -219,7 +219,7 @@ class ScoringService
                 return $byExact;
             }
 
-            return strcasecmp($a['name'], $b['name']);
+            return $a['userId'] <=> $b['userId'];
         });
 
         return $leaderboard;

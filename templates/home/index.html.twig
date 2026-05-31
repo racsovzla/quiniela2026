@@ -4,8 +4,9 @@
 
 {% block body %}
 <div class="p-4 p-md-5 mb-4 bg-white border rounded-3 shadow-sm">
-    <h1 class="display-6">Quiniela Mundial FIFA 2026</h1>
-    <p class="lead mb-4">Regístrate, verifica tu correo y participa con tus predicciones de fase de grupos.</p>
+    <p class="text-uppercase small fw-semibold text-info mb-2">Fase de grupos · Quiniela Mundial FIFA 2026</p>
+    <h1 class="display-6">Apostá con tus predicciones y seguí tu ranking en vivo</h1>
+    <p class="lead mb-4">Creá tu cuenta, verificá tu correo, esperá aprobación y empezá a cargar marcadores para la fase de grupos.</p>
 
     {% if app.user %}
         <div class="d-flex gap-2 flex-wrap">
@@ -18,5 +19,32 @@
             <a class="btn btn-outline-dark" href="{{ path('app_login') }}">Iniciar sesión</a>
         </div>
     {% endif %}
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">1. Registrate</h2>
+                <p class="mb-0">Usá tu correo real para ver tu cuenta, recibir el enlace de verificación y poder entrar al sistema.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">2. Verificá y esperá aprobación</h2>
+                <p class="mb-0">La verificación es automática por mail. Después, el admin aprueba la cuenta manualmente para habilitar el acceso completo.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">3. Cargá tus marcadores</h2>
+                <p class="mb-0">Podés editar hasta 5 minutos antes del kickoff. El pago valida desde cuándo empiezan a sumar tus puntos.</p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

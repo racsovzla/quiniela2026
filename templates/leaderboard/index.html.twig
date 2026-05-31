@@ -9,12 +9,13 @@
     <div class="card shadow-sm mb-3">
         <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
-                <div class="fw-semibold">Pick del día</div>
+                <div class="fw-semibold">Próximo partido a cerrar</div>
                 <div>
                     {{ nextFixture.homeTeam.code|flag_emoji }} {{ nextFixture.homeTeam.code|country_name_es(nextFixture.homeTeam.name) }}
                     vs
                     {{ nextFixture.awayTeam.code|flag_emoji }} {{ nextFixture.awayTeam.code|country_name_es(nextFixture.awayTeam.name) }}
                 </div>
+                <small class="text-body-secondary d-block mt-1">Ese es el partido que más pronto cierra para cargar o editar tu pronóstico.</small>
             </div>
             <small class="text-body-secondary">
                 Cierre: <span class="js-local-datetime" data-utc="{{ nextFixture.kickoffAt|date_modify('-5 minutes')|date('c') }}">{{ nextFixture.kickoffAt|date_modify('-5 minutes')|date('Y-m-d H:i') }} UTC</span>
@@ -26,6 +27,7 @@
 <div class="row g-4 align-items-start">
     <div class="col-lg-4">
         <h2 class="h5 mb-2">Usuarios</h2>
+        <p class="screen-note mb-2">Los <strong>+X</strong> son puntos en vivo antes del cierre. El ranking oficial se fija cuando el partido finaliza.</p>
         <div class="table-responsive bg-white border rounded-3 shadow-sm">
             <table class="table mb-0">
                 <thead>
@@ -41,8 +43,8 @@
                     {% for row in rows %}
                         {% set livePoints = livePointsByUser[row.userId]|default(0) %}
                         {% set streak = streakByUser[row.userId]|default(0) %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
+                        <tr class="{{ app.user and row.userId == app.user.id ? 'table-row-current-user' : '' }}">
+                            <td>{{ row.rank }}</td>
                             <td>{{ row.name }}</td>
                             <td>
                                 <strong>{{ row.points }}</strong>
@@ -52,7 +54,7 @@
                             </td>
                             <td>{{ row.exactHits }}</td>
                             <td>
-                                {% if loop.index == 1 %}
+                                {% if row.rank == 1 %}
                                     <span class="badge text-bg-warning">Líder</span>
                                 {% endif %}
                                 {% if streak >= 3 %}
@@ -70,7 +72,7 @@
             </table>
         </div>
 
-        <h2 class="h5 mt-3 mb-2">Ranking semanal (7 días)</h2>
+        <h2 class="h5 mt-3 mb-2">Ranking de los últimos 7 días</h2>
         <div class="table-responsive bg-white border rounded-3 shadow-sm">
             <table class="table mb-0">
                 <thead>
@@ -83,7 +85,7 @@
                 <tbody>
                     {% for row in weeklyRows %}
                         <tr>
-                            <td>{{ loop.index }}</td>
+                            <td>{{ row.rank }}</td>
                             <td>{{ row.name }}</td>
                             <td><strong>{{ row.points }}</strong></td>
                         </tr>

@@ -33,8 +33,8 @@ class LeaderboardController extends AbstractController
             $predictionsByGroup[$groupCode][] = $prediction;
         }
 
-        $rows = $scoringService->leaderboard();
-        $weeklyRows = $scoringService->weeklyLeaderboard($nowUtc, 7);
+        $rows = $this->withSharedPositions($scoringService->leaderboard());
+        $weeklyRows = $this->withSharedPositions($scoringService->weeklyLeaderboard($nowUtc, 7));
 
         return $this->render('leaderboard/index.html.twig', [
             'rows' => $rows,
@@ -45,5 +45,31 @@ class LeaderboardController extends AbstractController
             'fixturesByGroup' => $fixturesByGroup,
             'predictionsByGroup' => $predictionsByGroup,
         ]);
+    }
+
+    /**
+     * @param list<array{userId:int, name:string, points:int, exactHits:int}> $rows
+     *
+     * @return list<array{userId:int, name:string, points:int, exactHits:int, rank:int}>
+     */
+    private function withSharedPositions(array $rows): array
+    {
+        $rankedRows = [];
+        $currentRank = 0;
+        $previousPoints = null;
+        $previousExactHits = null;
+
+        foreach ($rows as $index => $row) {
+            if ($row['points'] !== $previousPoints || $row['exactHits'] !== $previousExactHits) {
+                $currentRank = $index + 1;
+                $previousPoints = $row['points'];
+                $previousExactHits = $row['exactHits'];
+            }
+
+            $row['rank'] = $currentRank;
+            $rankedRows[] = $row;
+        }
+
+        return $rankedRows;
     }
 }

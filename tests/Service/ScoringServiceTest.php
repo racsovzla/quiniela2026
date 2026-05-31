@@ -67,6 +67,30 @@ class ScoringServiceTest extends TestCase
         self::assertSame(3, $rows[1]['points']);
     }
 
+    public function testWeeklyLeaderboardDoesNotUseNameAsTieBreaker(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+        $nowUtc = new \DateTimeImmutable('2026-06-20 20:00:00', new \DateTimeZone('UTC'));
+
+        $this->predictionRepository
+            ->expects(self::once())
+            ->method('findFinishedBetweenKickoff')
+            ->willReturn([
+                $this->buildPrediction('Zoe', 20, 1, 0, 1, 0, new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'))),
+                $this->buildPrediction('Ana', 10, 1, 0, 1, 0, new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'))),
+            ]);
+
+        $rows = $service->weeklyLeaderboard($nowUtc, 7);
+
+        self::assertCount(2, $rows);
+        self::assertSame(10, $rows[0]['userId']);
+        self::assertSame('Ana', $rows[0]['name']);
+        self::assertSame(20, $rows[1]['userId']);
+        self::assertSame('Zoe', $rows[1]['name']);
+        self::assertSame($rows[0]['points'], $rows[1]['points']);
+        self::assertSame($rows[0]['exactHits'], $rows[1]['exactHits']);
+    }
+
     public function testActiveStreakCountsConsecutiveScoringMatches(): void
     {
         $service = new ScoringService($this->predictionRepository);

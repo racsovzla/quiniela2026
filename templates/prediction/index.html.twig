@@ -6,17 +6,22 @@
 <h1 class="h3 mb-3">Predicciones - Fase de Grupos</h1>
 
 {% if not canParticipate %}
-    <div class="alert alert-warning">Debes verificar tu correo para guardar predicciones.</div>
+    <div class="alert alert-warning">Debes verificar tu correo para guardar predicciones. Cuando termines ese paso, este panel se desbloquea.</div>
 {% elseif paymentValidatedAt is null %}
     <div class="alert alert-info">Ya puedes cargar predicciones. Sumarás puntos solo a partir de que el admin valide tu pago.</div>
 {% else %}
-    <div class="alert alert-success">Pago validado. Sumas puntos para partidos con kickoff desde {{ paymentValidatedAt|date('Y-m-d H:i') }} UTC.</div>
+    <div class="alert alert-success">Pago validado. Sumas puntos para partidos con kickoff desde <span class="js-local-datetime" data-utc="{{ paymentValidatedAt|date('c') }}">{{ paymentValidatedAt|date('Y-m-d H:i') }} UTC</span>.</div>
 {% endif %}
+
+<p class="screen-note mb-3">Tip: solo se guardan filas con marcador completo. Si un partido está cerrado, la fila queda bloqueada y te muestra por qué.</p>
 
 {% if canParticipate %}
 <div class="d-flex justify-content-end mb-2 gap-2 align-items-center">
     <span id="save-all-feedback" class="text-success fw-semibold" aria-live="polite"></span>
     <button id="btn-save-all" class="btn btn-success">Guardar todo</button>
+</div>
+<div class="text-end mb-3">
+    <small class="text-body-secondary">Se envían solo los partidos con ambos goles cargados y la ventana abierta.</small>
 </div>
 {% endif %}
 <div class="table-responsive bg-white border rounded-3 shadow-sm">
@@ -25,7 +30,7 @@
         <tr>
             <th>Grupo</th>
             <th>Partido</th>
-            <th>Inicio (UTC)</th>
+            <th>Inicio local</th>
             <th>Tu predicción</th>
             <th></th>
         </tr>
@@ -42,9 +47,9 @@
             <td>
                 <form class="d-flex gap-2 prediction-form" data-turbo="false" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('save_prediction_' ~ fixture.id) }}">
-                    <input type="number" min="0" name="home" class="form-control" style="max-width:90px" value="{{ p ? p.predictedHomeScore : '' }}" {{ formDisabled ? 'disabled' : '' }}>
+                    <input type="number" min="0" name="home" class="form-control" style="max-width:90px" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
                     <span class="pt-2">-</span>
-                    <input type="number" min="0" name="away" class="form-control" style="max-width:90px" value="{{ p ? p.predictedAwayScore : '' }}" {{ formDisabled ? 'disabled' : '' }}>
+                    <input type="number" min="0" name="away" class="form-control" style="max-width:90px" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
                     <button class="btn btn-sm {{ p ? 'btn-outline-primary' : 'btn-primary' }}" {{ formDisabled ? 'disabled' : '' }}>{{ p ? 'Editar' : 'Guardar' }}</button>
                     <span class="prediction-feedback pt-2" aria-live="polite"></span>
                 </form>
@@ -52,11 +57,17 @@
             <td>
                 {% if fixture.status == 'finished' %}
                     <span class="badge text-bg-secondary">Finalizado</span>
+                    <small class="d-block text-body-secondary mt-1">No se puede editar más.</small>
                 {% elseif canEditFixture %}
                     <span class="badge text-bg-success">Abierta</span>
                     <small class="d-block text-body-secondary mt-1 js-deadline-countdown" data-deadline="{{ fixtureDeadlineIso[fixture.id]|default('') }}"></small>
                 {% else %}
                     <span class="badge text-bg-warning">Cerrada</span>
+                    {% if not canParticipate %}
+                        <small class="d-block text-body-secondary mt-1">Verificá tu correo para habilitarla.</small>
+                    {% else %}
+                        <small class="d-block text-body-secondary mt-1">Ya pasó el cierre de este partido.</small>
+                    {% endif %}
                 {% endif %}
             </td>
         </tr>
@@ -165,7 +176,7 @@
                 });
                 if (forms.length === 0) {
                     const fb = document.getElementById('save-all-feedback');
-                    fb.textContent = 'Ningún partido con marcador completo o ventana abierta.';
+                    fb.textContent = 'Completá al menos un marcador abierto para guardar todo.';
                     fb.className = 'text-warning fw-semibold';
                     setTimeout(() => { fb.textContent = ''; fb.className = 'text-success fw-semibold'; }, 3000);
                     return;
