@@ -19,3 +19,6 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+# Local MCP helper dependencies
+/tools/hf-logs-mcp/node_modules/

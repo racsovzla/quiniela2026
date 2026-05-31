@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "hf-space-logs": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "tools/hf-logs-mcp/index.js"
+      ],
+      "env": {
+        "HF_SPACE_ID": "racsovzla/quiniela2026"
+      }
+    }
+  }
+}
