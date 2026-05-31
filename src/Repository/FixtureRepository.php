@@ -85,4 +85,28 @@ class FixtureRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /**
+     * Fixtures whose prediction window closed (kickoff - 5 min) and email not sent yet.
+     *
+     * @return list<Fixture>
+     */
+    public function findDueForPredictionEmail(
+        \DateTimeImmutable $nowUtc,
+        \DateTimeImmutable $catchUpSinceUtc,
+    ): array {
+        $closingThreshold = $nowUtc->modify('+5 minutes');
+
+        return $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->andWhere('f.predictionsEmailSentAt IS NULL')
+            ->andWhere('f.kickoffAt <= :closingThreshold')
+            ->andWhere('f.kickoffAt >= :catchUpSinceUtc')
+            ->setParameter('closingThreshold', $closingThreshold)
+            ->setParameter('catchUpSinceUtc', $catchUpSinceUtc)
+            ->orderBy('f.kickoffAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

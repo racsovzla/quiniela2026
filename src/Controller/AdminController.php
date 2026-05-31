@@ -325,6 +325,10 @@ class AdminController extends AbstractController
         }
 
         $sentCount = $fixturePredictionEmailService->sendFixturePredictionsSummary($fixture, $predictions, $recipients);
+
+        $fixture->setPredictionsEmailSentAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
+        $fixtureRepository->getEntityManager()->flush();
+
         $this->addFlash('success', sprintf('Resumen enviado para %s destinatarios.', $sentCount));
 
         return $this->redirectToRoute('admin_dashboard');

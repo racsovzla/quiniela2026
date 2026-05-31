@@ -52,6 +52,9 @@ class Fixture
     #[ORM\Column]
     private \DateTimeImmutable $updatedAt;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $predictionsEmailSentAt = null;
+
     /**
      * @var Collection<int, Prediction>
      */
@@ -179,5 +182,22 @@ class Fixture
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function getPredictionsEmailSentAt(): ?\DateTimeImmutable
+    {
+        return $this->predictionsEmailSentAt;
+    }
+
+    public function setPredictionsEmailSentAt(?\DateTimeImmutable $predictionsEmailSentAt): static
+    {
+        $this->predictionsEmailSentAt = $predictionsEmailSentAt;
+
+        return $this;
+    }
+
+    public function hasPredictionsEmailBeenSent(): bool
+    {
+        return $this->predictionsEmailSentAt !== null;
     }
 }

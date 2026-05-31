@@ -1,0 +1,38 @@
+name: Send due prediction emails
+
+on:
+  schedule:
+    # Every 5 minutes (GitHub Actions minimum interval).
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  send-due-prediction-emails:
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: prod
+      APP_DEBUG: '0'
+      APP_SECRET: ${{ secrets.APP_SECRET }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MAILER_DSN: ${{ secrets.MAILER_DSN }}
+      MAILER_FROM_EMAIL: ${{ secrets.MAILER_FROM_EMAIL }}
+      MAILER_FROM_NAME: ${{ secrets.MAILER_FROM_NAME }}
+      MESSENGER_TRANSPORT_DSN: sync://
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_mysql, pdo_pgsql, zip
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+      - name: Run pending migrations
+        run: php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod
+
+      - name: Send due prediction emails
+        run: php bin/console app:send-due-prediction-emails --env=prod
