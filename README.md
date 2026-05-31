@@ -1,3 +1,13 @@
+---
+title: Quiniela FIFA 2026
+emoji: ⚽
+colorFrom: green
+colorTo: blue
+sdk: docker
+app_port: 80
+pinned: false
+---
+
 # Quiniela FIFA 2026 (Symfony + MySQL)
 
 Implementacion inicial MVP.
