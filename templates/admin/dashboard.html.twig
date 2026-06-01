@@ -140,7 +140,7 @@
                 <ul class="list-group">
                     {% for team in teams %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>{{ team.code|flag_emoji }} {{ team.code|country_name_es(team.name) }} ({{ team.code }}){% if team.group %} - Grupo {{ team.group.code }}{% endif %}</span>
+                            <span>{{ team.code|flag_icon }} {{ team.code|country_name_es(team.name) }} ({{ team.code }}){% if team.group %} - Grupo {{ team.group.code }}{% endif %}</span>
                             <a class="btn btn-outline-dark btn-sm" href="{{ path('admin_team_edit', {id: team.id}) }}">Editar</a>
                         </li>
                     {% else %}
@@ -159,7 +159,7 @@
                 <ul class="list-group">
                     {% for fixture in fixtures %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>{{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_emoji }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} - <span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></span>
+                            <span>{{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} - <span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></span>
                             <a class="btn btn-outline-dark btn-sm" href="{{ path('admin_fixture_edit', {id: fixture.id}) }}">Editar</a>
                         </li>
                     {% else %}

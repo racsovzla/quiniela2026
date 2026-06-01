@@ -17,25 +17,57 @@ class FlagExtension extends AbstractExtension
     {
         return [
             new TwigFilter('flag_emoji', [$this, 'flagEmoji']),
+            new TwigFilter('flag_icon', [$this, 'flagIcon'], ['is_safe' => ['html']]),
             new TwigFilter('country_name_es', [$this, 'countryNameEs']),
         ];
     }
 
     public function flagEmoji(?string $countryCode): string
     {
-        if (null === $countryCode || '' === trim($countryCode)) {
+        $alpha2 = $this->resolveAlpha2($countryCode);
+
+        if (null === $alpha2) {
             return '';
+        }
+
+        return $this->alpha2ToFlagEmoji($alpha2);
+    }
+
+    public function flagIcon(?string $countryCode): string
+    {
+        $alpha2 = $this->resolveAlpha2($countryCode);
+
+        if (null === $alpha2) {
+            return '';
+        }
+
+        $emoji = $this->alpha2ToFlagEmoji($alpha2);
+        $alpha2Lower = strtolower($alpha2);
+        $code = strtoupper(trim((string) $countryCode));
+        $alt = htmlspecialchars('Bandera ' . $code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $emojiEscaped = htmlspecialchars($emoji, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return sprintf(
+            '<span class="flag-icon-wrap"><img class="flag-icon" src="https://flagcdn.com/24x18/%s.png" alt="%s" width="24" height="18" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\';"><span class="flag-emoji-fallback" aria-hidden="true">%s</span></span>',
+            $alpha2Lower,
+            $alt,
+            $emojiEscaped
+        );
+    }
+
+    private function resolveAlpha2(?string $countryCode): ?string
+    {
+        if (null === $countryCode || '' === trim($countryCode)) {
+            return null;
         }
 
         $alpha3 = $this->countryNameResolver->fifaToIso3($countryCode);
 
         if (!Countries::alpha3CodeExists($alpha3)) {
-            return '';
+            return null;
         }
 
-        $alpha2 = Countries::getAlpha2Code($alpha3);
-
-        return $this->alpha2ToFlagEmoji($alpha2);
+        return Countries::getAlpha2Code($alpha3);
     }
 
     private function alpha2ToFlagEmoji(string $alpha2): string

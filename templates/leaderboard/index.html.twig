@@ -11,9 +11,9 @@
             <div>
                 <div class="fw-semibold">Próximo partido a cerrar</div>
                 <div>
-                    {{ nextFixture.homeTeam.code|flag_emoji }} {{ nextFixture.homeTeam.code|country_name_es(nextFixture.homeTeam.name) }}
+                    {{ nextFixture.homeTeam.code|flag_icon }} {{ nextFixture.homeTeam.code|country_name_es(nextFixture.homeTeam.name) }}
                     vs
-                    {{ nextFixture.awayTeam.code|flag_emoji }} {{ nextFixture.awayTeam.code|country_name_es(nextFixture.awayTeam.name) }}
+                    {{ nextFixture.awayTeam.code|flag_icon }} {{ nextFixture.awayTeam.code|country_name_es(nextFixture.awayTeam.name) }}
                 </div>
                 <small class="text-body-secondary d-block mt-1">Ese es el partido que más pronto cierra para cargar o editar tu pronóstico.</small>
             </div>
@@ -124,7 +124,7 @@
                                             {% set isFinished = fixture.status == 'finished' %}
                                             <tr>
                                                 <td class="fw-semibold team-cell team-cell-home">
-                                                    {{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
+                                                    {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
                                                 </td>
                                                 <td class="text-center fw-bold score-cell">
                                                     {% if isFinished %}
@@ -140,7 +140,7 @@
                                                     <small class="d-block text-body-secondary fw-normal mt-1 js-local-datetime kickoff-time" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</small>
                                                 </td>
                                                 <td class="fw-semibold text-end team-cell team-cell-away">
-                                                    {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} {{ fixture.awayTeam.code|flag_emoji }}
+                                                    {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} {{ fixture.awayTeam.code|flag_icon }}
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -173,9 +173,9 @@
                                         {% for prediction in predictionsByGroup[groupCode]|default([]) %}
                                             <tr>
                                                 <td>
-                                                    {{ prediction.fixture.homeTeam.code|flag_emoji }} {{ prediction.fixture.homeTeam.code|country_name_es(prediction.fixture.homeTeam.name) }}
+                                                    {{ prediction.fixture.homeTeam.code|flag_icon }} {{ prediction.fixture.homeTeam.code|country_name_es(prediction.fixture.homeTeam.name) }}
                                                     vs
-                                                    {{ prediction.fixture.awayTeam.code|flag_emoji }} {{ prediction.fixture.awayTeam.code|country_name_es(prediction.fixture.awayTeam.name) }}
+                                                    {{ prediction.fixture.awayTeam.code|flag_icon }} {{ prediction.fixture.awayTeam.code|country_name_es(prediction.fixture.awayTeam.name) }}
                                                 </td>
                                                 <td><span class="js-local-datetime" data-utc="{{ prediction.fixture.kickoffAt|date('c') }}">{{ prediction.fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
                                                 <td>{{ prediction.user.name }}</td>

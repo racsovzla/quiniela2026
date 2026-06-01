@@ -219,6 +219,25 @@ main.container {
     font-size: 0.95rem;
 }
 
+.flag-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    vertical-align: -0.1em;
+}
+
+.flag-icon {
+    width: 1.25em;
+    height: auto;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.flag-emoji-fallback {
+    display: none;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+}
+
 .table-row-current-user {
     background: linear-gradient(90deg, rgba(245, 183, 0, 0.16), rgba(46, 196, 255, 0.08));
     box-shadow: inset 0 0 0 1px rgba(245, 183, 0, 0.18);

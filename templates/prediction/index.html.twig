@@ -42,7 +42,7 @@
         {% set formDisabled = (not canParticipate) or (not canEditFixture) %}
         <tr>
             <td data-label="Grupo">{{ fixture.group ? fixture.group.code : (fixture.homeTeam.group ? fixture.homeTeam.group.code : '-') }}</td>
-            <td data-label="Partido" class="predictions-table__match">{{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_emoji }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</td>
+            <td data-label="Partido" class="predictions-table__match">{{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</td>
             <td data-label="Inicio local"><span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
             <td data-label="Tu predicción">
                 <form class="d-flex gap-2 prediction-form" data-turbo="false" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
