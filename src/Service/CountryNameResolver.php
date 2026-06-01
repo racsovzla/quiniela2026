@@ -12,10 +12,19 @@ class CountryNameResolver
      * @var array<string, string>
      */
     private const FIFA_TO_ISO3 = [
+        'ALG' => 'DZA',
+        'CRO' => 'HRV',
         'ENG' => 'GBR',
+        'GER' => 'DEU',
+        'HAI' => 'HTI',
         'SCO' => 'GBR',
         'KSA' => 'SAU',
+        'NED' => 'NLD',
+        'PAR' => 'PRY',
+        'POR' => 'PRT',
         'RSA' => 'ZAF',
+        'SUI' => 'CHE',
+        'URU' => 'URY',
     ];
 
     /**
