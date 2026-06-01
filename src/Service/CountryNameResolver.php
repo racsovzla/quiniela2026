@@ -22,6 +22,7 @@ class CountryNameResolver
         'NED' => 'NLD',
         'PAR' => 'PRY',
         'POR' => 'PRT',
+        'PNM' => 'PAN',
         'RSA' => 'ZAF',
         'SUI' => 'CHE',
         'URU' => 'URY',
