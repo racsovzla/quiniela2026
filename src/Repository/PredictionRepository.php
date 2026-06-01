@@ -57,6 +57,9 @@ class PredictionRepository extends ServiceEntityRepository
     }
 
     /**
+     * Predictions visible on leaderboard: edit window closed (kickoff - 5 min) or fixture finished.
+     * Loaded scores before kickoff do not reveal predictions.
+     *
      * @return list<Prediction>
      */
     public function findClosedWithFixtureAndUserOrderedForGroups(\DateTimeImmutable $nowUtc): array
@@ -69,7 +72,7 @@ class PredictionRepository extends ServiceEntityRepository
             ->leftJoin('f.group', 'g')->addSelect('g')
             ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
             ->leftJoin('f.awayTeam', 'at')->addSelect('at')
-            ->andWhere('f.kickoffAt <= :closingThreshold OR f.status = :finishedStatus OR (f.homeScore IS NOT NULL AND f.awayScore IS NOT NULL)')
+            ->andWhere('f.kickoffAt <= :closingThreshold OR f.status = :finishedStatus')
             ->setParameter('closingThreshold', $closingThreshold)
             ->setParameter('finishedStatus', Fixture::STATUS_FINISHED)
             ->addOrderBy('g.code', 'ASC')

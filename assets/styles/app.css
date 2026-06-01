@@ -269,6 +269,23 @@ main.container {
     font-size: 0.82rem;
 }
 
+.prediction-score-input {
+    max-width: 90px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.prediction-score-input::-webkit-outer-spin-button,
+.prediction-score-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.prediction-form-separator {
+    align-self: center;
+    font-weight: 700;
+}
+
 .list-group-item {
     padding-top: 0.7rem;
     padding-bottom: 0.7rem;
@@ -546,5 +563,121 @@ input[type='password']::-ms-clear {
     .auth-field .form-control {
         min-height: 44px;
         padding-inline: 0.75rem 2.6rem;
+    }
+
+    .predictions-page.table-responsive {
+        overflow-x: visible;
+    }
+
+    .predictions-table thead {
+        display: none;
+    }
+
+    .predictions-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.25rem 0.75rem;
+        padding: 1rem 0.85rem;
+        border-bottom: 1px solid rgba(156, 179, 197, 0.25);
+    }
+
+    .predictions-table tbody tr:last-child {
+        border-bottom: 0;
+    }
+
+    .predictions-table td {
+        display: block;
+        padding: 0;
+        border: 0;
+    }
+
+    .predictions-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--wc-muted);
+        margin-bottom: 0.15rem;
+    }
+
+    .predictions-table__status::before {
+        display: none;
+    }
+
+    .predictions-table td[data-label="Grupo"] {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: center;
+    }
+
+    .predictions-table td[data-label="Grupo"]::before {
+        display: inline;
+        margin-right: 0.35rem;
+        margin-bottom: 0;
+    }
+
+    .predictions-table__status {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: center;
+        justify-self: end;
+        text-align: right;
+    }
+
+    .predictions-table__match {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.35;
+        margin-top: 0.15rem;
+    }
+
+    .predictions-table td[data-label="Inicio local"] {
+        grid-column: 1 / -1;
+        grid-row: 3;
+    }
+
+    .predictions-table td[data-label="Tu predicción"] {
+        grid-column: 1 / -1;
+        grid-row: 4;
+        margin-top: 0.5rem;
+    }
+
+    .predictions-table .prediction-form {
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .predictions-table .prediction-score-input {
+        flex: 1 1 calc(50% - 1.75rem);
+        max-width: none;
+        min-width: 0;
+        min-height: 52px;
+        font-size: 1.5rem;
+        line-height: 1.2;
+        padding: 0.45rem 0.35rem;
+    }
+
+    .predictions-table .prediction-form-separator {
+        flex: 0 0 auto;
+        align-self: center;
+        font-size: 1.35rem;
+        line-height: 1;
+    }
+
+    .predictions-table .prediction-form-submit {
+        flex: 1 1 100%;
+        min-height: 48px;
+        font-size: 1rem;
+    }
+
+    .predictions-table .prediction-feedback {
+        flex: 1 1 100%;
+        padding-top: 0 !important;
+        min-height: 1.25rem;
     }
 }

@@ -24,8 +24,8 @@
     <small class="text-body-secondary">Se envían solo los partidos con ambos goles cargados y la ventana abierta.</small>
 </div>
 {% endif %}
-<div class="table-responsive bg-white border rounded-3 shadow-sm">
-<table class="table align-middle mb-0">
+<div class="table-responsive bg-white border rounded-3 shadow-sm predictions-page">
+<table class="table align-middle mb-0 predictions-table">
     <thead>
         <tr>
             <th>Grupo</th>
@@ -41,20 +41,20 @@
         {% set canEditFixture = fixtureCanEdit[fixture.id]|default(false) %}
         {% set formDisabled = (not canParticipate) or (not canEditFixture) %}
         <tr>
-            <td>{{ fixture.group ? fixture.group.code : (fixture.homeTeam.group ? fixture.homeTeam.group.code : '-') }}</td>
-            <td>{{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_emoji }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</td>
-            <td><span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
-            <td>
+            <td data-label="Grupo">{{ fixture.group ? fixture.group.code : (fixture.homeTeam.group ? fixture.homeTeam.group.code : '-') }}</td>
+            <td data-label="Partido" class="predictions-table__match">{{ fixture.homeTeam.code|flag_emoji }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_emoji }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</td>
+            <td data-label="Inicio local"><span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
+            <td data-label="Tu predicción">
                 <form class="d-flex gap-2 prediction-form" data-turbo="false" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('save_prediction_' ~ fixture.id) }}">
-                    <input type="number" min="0" name="home" class="form-control" style="max-width:90px" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
-                    <span class="pt-2">-</span>
-                    <input type="number" min="0" name="away" class="form-control" style="max-width:90px" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
-                    <button class="btn btn-sm {{ p ? 'btn-outline-primary' : 'btn-primary' }}" {{ formDisabled ? 'disabled' : '' }}>{{ p ? 'Editar' : 'Guardar' }}</button>
+                    <input type="number" min="0" inputmode="numeric" name="home" class="form-control prediction-score-input" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
+                    <span class="prediction-form-separator">-</span>
+                    <input type="number" min="0" inputmode="numeric" name="away" class="form-control prediction-score-input" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
+                    <button class="btn btn-sm prediction-form-submit {{ p ? 'btn-outline-primary' : 'btn-primary' }}" {{ formDisabled ? 'disabled' : '' }}>{{ p ? 'Editar' : 'Guardar' }}</button>
                     <span class="prediction-feedback pt-2" aria-live="polite"></span>
                 </form>
             </td>
-            <td>
+            <td class="predictions-table__status">
                 {% if fixture.status == 'finished' %}
                     <span class="badge text-bg-secondary">Finalizado</span>
                     <small class="d-block text-body-secondary mt-1">No se puede editar más.</small>
