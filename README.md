@@ -121,6 +121,8 @@ A,2026-06-12 02:00,KOR,CZE
 
 ## Dataset 2026 cargado
 
+Actualmente solo están cargados los partidos de la fase de grupos. A medida que se definan los partidos de las fases eliminatorias (round of 32, round of 16, cuartos, semifinal, tercer puesto y final) se irán agregando.
+
 - Equipos por grupo: data/worldcup2026_group_teams.csv
 - Partidos fase de grupos: data/worldcup2026_group_fixtures.csv
 

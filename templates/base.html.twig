@@ -60,16 +60,16 @@
                 <div class="navbar-nav">
                     {% if app.user %}
                         <a class="nav-link" href="{{ path('app_predictions') }}">Predicciones</a>
-                        <a class="nav-link" href="{{ path('app_leaderboard') }}">Leaderboard</a>
+                        <a class="nav-link" href="{{ path('app_leaderboard') }}">Tabla de posiciones</a>
                         <a class="nav-link" href="{{ path('app_rules') }}">Reglas</a>
                         {% if is_granted('ROLE_ADMIN') %}
                             <a class="nav-link" href="{{ path('admin_dashboard') }}">Admin</a>
                         {% endif %}
-                        <a class="nav-link" href="{{ path('app_logout') }}">Salir</a>
+                        <a class="nav-link" href="{{ path('app_logout') }}">Cerrar sesión</a>
                     {% else %}
                         <a class="nav-link" href="{{ path('app_rules') }}">Reglas</a>
-                        <a class="nav-link" href="{{ path('app_login') }}">Entrar</a>
-                        <a class="nav-link" href="{{ path('app_register') }}">Registro</a>
+                        <a class="nav-link" href="{{ path('app_login') }}">Iniciar sesión</a>
+                        <a class="nav-link" href="{{ path('app_register') }}">Registrarse</a>
                     {% endif %}
                 </div>
             </div>

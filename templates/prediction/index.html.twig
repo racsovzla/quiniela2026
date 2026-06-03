@@ -64,7 +64,7 @@
                 {% else %}
                     <span class="badge text-bg-warning">Cerrada</span>
                     {% if not canParticipate %}
-                        <small class="d-block text-body-secondary mt-1">Verificá tu correo para habilitarla.</small>
+                        <small class="d-block text-body-secondary mt-1">Verifica tu correo para habilitarla.</small>
                     {% else %}
                         <small class="d-block text-body-secondary mt-1">Ya pasó el cierre de este partido.</small>
                     {% endif %}
@@ -176,7 +176,7 @@
                 });
                 if (forms.length === 0) {
                     const fb = document.getElementById('save-all-feedback');
-                    fb.textContent = 'Completá al menos un marcador abierto para guardar todo.';
+                    fb.textContent = 'Completa al menos un marcador abierto para guardar todo.';
                     fb.className = 'text-warning fw-semibold';
                     setTimeout(() => { fb.textContent = ''; fb.className = 'text-success fw-semibold'; }, 3000);
                     return;

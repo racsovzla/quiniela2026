@@ -34,3 +34,7 @@ when@prod:
         # Trust Render reverse-proxy headers so request scheme/host are resolved correctly.
         trusted_proxies: '127.0.0.1,::1,REMOTE_ADDR'
         trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-prefix']
+        session:
+            # Required when app runs embedded (e.g. huggingface.co iframe), otherwise browser drops session cookie.
+            cookie_samesite: none
+            cookie_secure: true
