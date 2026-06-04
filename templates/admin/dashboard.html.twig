@@ -88,6 +88,14 @@
                                 <div>{{ user.name }}</div>
                                 <small>{{ user.email }}</small>
                                 <div class="mt-1">
+                                    {% set missingPredictions = fixtures|length - user.predictions|length %}
+                                    {% if missingPredictions > 0 %}
+                                        <span class="badge text-bg-danger">Faltan {{ missingPredictions }} predicciones</span>
+                                    {% else %}
+                                        <span class="badge text-bg-info">Predicciones al día</span>
+                                    {% endif %}
+                                </div>
+                                <div class="mt-1">
                                     {% if user.paymentValidatedAt %}
                                         <span class="badge text-bg-success">Pago validado</span>
                                         <small class="text-body-secondary d-block">Desde: {{ user.paymentValidatedAt|date('Y-m-d H:i') }} UTC</small>

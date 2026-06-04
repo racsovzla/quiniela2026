@@ -36,7 +36,6 @@
                         <th>Participante</th>
                         <th>Puntos</th>
                         <th>Aciertos exactos</th>
-                        <th>Insignias</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,7 +44,17 @@
                         {% set streak = streakByUser[row.userId]|default(0) %}
                         <tr class="{{ app.user and row.userId == app.user.id ? 'table-row-current-user' : '' }}">
                             <td>{{ row.rank }}</td>
-                            <td>{{ row.name }}</td>
+                            <td>
+                                {% if row.rank == 1 %}
+                                    <strong style="color: #D4AF37;">{{ row.name }}</strong>
+                                {% elseif row.rank == 2 %}
+                                    <strong style="color: #C0C0C0;">{{ row.name }}</strong>
+                                {% elseif row.rank == 3 %}
+                                    <strong style="color: #CD7F32;">{{ row.name }}</strong>
+                                {% else %}
+                                    {{ row.name }}
+                                {% endif %}
+                            </td>
                             <td>
                                 <strong>{{ row.points }}</strong>
                                 {% if livePoints > 0 %}
@@ -53,20 +62,9 @@
                                 {% endif %}
                             </td>
                             <td>{{ row.exactHits }}</td>
-                            <td>
-                                {% if row.rank == 1 %}
-                                    <span class="badge text-bg-warning">Líder</span>
-                                {% endif %}
-                                {% if streak >= 3 %}
-                                    <span class="badge text-bg-info">Racha {{ streak }}</span>
-                                {% endif %}
-                                {% if row.exactHits >= 5 %}
-                                    <span class="badge text-bg-success">Francotirador</span>
-                                {% endif %}
-                            </td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="5" class="text-center py-4">Sin datos todavía.</td></tr>
+                        <tr><td colspan="4" class="text-center py-4">Sin datos todavía.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
