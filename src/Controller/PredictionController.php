@@ -44,6 +44,8 @@ class PredictionController extends AbstractController
 
         $fixtureCanEdit = [];
         $fixtureDeadlineIso = [];
+        $pendingCount = 0;
+
         foreach ($fixtures as $fixture) {
             $fixtureId = $fixture->getId();
             if (null === $fixtureId) {
@@ -51,9 +53,36 @@ class PredictionController extends AbstractController
             }
 
             $deadline = $predictionWindowService->deadline($fixture);
-            $fixtureCanEdit[$fixtureId] = $predictionWindowService->canEditAt($fixture, $nowUtc);
+            $canEdit = $predictionWindowService->canEditAt($fixture, $nowUtc);
+            $fixtureCanEdit[$fixtureId] = $canEdit;
             $fixtureDeadlineIso[$fixtureId] = $deadline->format(DATE_ATOM);
+
+            $hasPrediction = isset($predictionByFixture[$fixtureId]) && 
+                             $predictionByFixture[$fixtureId]->getPredictedHomeScore() !== null &&
+                             $predictionByFixture[$fixtureId]->getPredictedAwayScore() !== null;
+
+            if (!$hasPrediction && $canEdit) {
+                $pendingCount++;
+            }
         }
+
+        usort($fixtures, function($a, $b) use ($predictionByFixture) {
+            $aId = $a->getId();
+            $bId = $b->getId();
+            
+            $aHas = isset($predictionByFixture[$aId]) && 
+                    $predictionByFixture[$aId]->getPredictedHomeScore() !== null &&
+                    $predictionByFixture[$aId]->getPredictedAwayScore() !== null;
+            $bHas = isset($predictionByFixture[$bId]) && 
+                    $predictionByFixture[$bId]->getPredictedHomeScore() !== null &&
+                    $predictionByFixture[$bId]->getPredictedAwayScore() !== null;
+            
+            if ($aHas !== $bHas) {
+                return $aHas ? 1 : -1;
+            }
+            
+            return $a->getKickoffAt() <=> $b->getKickoffAt();
+        });
 
         return $this->render('prediction/index.html.twig', [
             'fixtures' => $fixtures,
@@ -62,6 +91,7 @@ class PredictionController extends AbstractController
             'fixtureDeadlineIso' => $fixtureDeadlineIso,
             'canParticipate' => $user->isVerified(),
             'paymentValidatedAt' => $user->getPaymentValidatedAt(),
+            'pendingCount' => $pendingCount,
         ]);
     }
 

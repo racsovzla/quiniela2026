@@ -41,7 +41,7 @@ class AdminController extends AbstractController
             'approvedUsers' => $userRepository->findBy(['isApproved' => true], ['createdAt' => 'ASC']),
             'groups' => $groupRepository->findBy([], ['code' => 'ASC']),
             'teams' => $teamRepository->findBy([], ['name' => 'ASC']),
-            'fixtures' => $fixtureRepository->findAllOrdered(),
+            'fixtures' => $fixtureRepository->findAllOrderedForAdmin(),
         ]);
     }
 

@@ -13,6 +13,18 @@
     <div class="alert alert-success">Pago validado. Sumas puntos para partidos con kickoff desde <span class="js-local-datetime" data-utc="{{ paymentValidatedAt|date('c') }}">{{ paymentValidatedAt|date('Y-m-d H:i') }} UTC</span>.</div>
 {% endif %}
 
+{% if canParticipate %}
+    {% if pendingCount > 0 %}
+        <div class="alert alert-danger shadow-sm border-0 border-start border-danger border-4">
+            <strong>¡Atención!</strong> Tienes <strong>{{ pendingCount }}</strong> predicci{{ pendingCount == 1 ? 'ón' : 'ones' }} pendiente{{ pendingCount == 1 ? '' : 's' }} por llenar.
+        </div>
+    {% else %}
+        <div class="alert alert-info shadow-sm border-0 border-start border-info border-4">
+            <strong>¡Excelente!</strong> Tienes todas tus predicciones disponibles al día.
+        </div>
+    {% endif %}
+{% endif %}
+
 <p class="screen-note mb-3">Tip: solo se guardan filas con marcador completo. Si un partido está cerrado, la fila queda bloqueada y te muestra por qué.</p>
 
 {% if canParticipate %}

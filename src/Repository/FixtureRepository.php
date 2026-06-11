@@ -32,6 +32,30 @@ class FixtureRepository extends ServiceEntityRepository
     /**
      * @return list<Fixture>
      */
+    public function findAllOrderedForAdmin(): array
+    {
+        $fixtures = $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->getQuery()
+            ->getResult();
+
+        usort($fixtures, function (Fixture $a, Fixture $b) {
+            if ($a->getStatus() !== $b->getStatus()) {
+                return $a->getStatus() === Fixture::STATUS_SCHEDULED ? -1 : 1;
+            }
+            if ($a->getStatus() === Fixture::STATUS_SCHEDULED) {
+                return $a->getKickoffAt() <=> $b->getKickoffAt();
+            }
+            return $b->getKickoffAt() <=> $a->getKickoffAt();
+        });
+
+        return $fixtures;
+    }
+
+    /**
+     * @return list<Fixture>
+     */
     public function findAllOrderedByGroupAndKickoff(): array
     {
         return $this->createQueryBuilder('f')

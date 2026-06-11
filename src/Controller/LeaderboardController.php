@@ -22,10 +22,25 @@ class LeaderboardController extends AbstractController
         $nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
         $fixturesByGroup = [];
+        $groupNextKickoff = [];
         foreach ($fixtureRepository->findAllOrderedByGroupAndKickoff() as $fixture) {
             $groupCode = $fixture->getGroup()?->getCode() ?? '-';
             $fixturesByGroup[$groupCode][] = $fixture;
+
+            if ($fixture->getStatus() === \App\Entity\Fixture::STATUS_SCHEDULED && !isset($groupNextKickoff[$groupCode])) {
+                $groupNextKickoff[$groupCode] = $fixture->getKickoffAt()->getTimestamp();
+            }
         }
+
+        uksort($fixturesByGroup, function ($codeA, $codeB) use ($groupNextKickoff) {
+            $tsA = $groupNextKickoff[$codeA] ?? PHP_INT_MAX;
+            $tsB = $groupNextKickoff[$codeB] ?? PHP_INT_MAX;
+
+            if ($tsA === $tsB) {
+                return $codeA <=> $codeB;
+            }
+            return $tsA <=> $tsB;
+        });
 
         $predictionsByGroup = [];
         foreach ($predictionRepository->findClosedWithFixtureAndUserOrderedForGroups($nowUtc) as $prediction) {

@@ -54,6 +54,7 @@
     </div>
 </div>
 
+
 <div class="row g-4">
     <div class="col-lg-5">
         <div class="card shadow-sm">
@@ -123,6 +124,32 @@
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 mb-0">Partidos</h2>
+                    <a class="btn btn-primary btn-sm" href="{{ path('admin_fixture_new') }}">Nuevo partido</a>
+                </div>
+                <ul class="list-group">
+                    {% for fixture in fixtures %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                {% if fixture.status == 'finished' %}
+                                    <span class="badge text-bg-secondary me-2">Finalizado</span>
+                                {% else %}
+                                    <span class="badge text-bg-info me-2">Programado</span>
+                                {% endif %}
+                                {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} - <span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span>
+                            </span>
+                            <a class="btn btn-outline-dark btn-sm" href="{{ path('admin_fixture_edit', {id: fixture.id}) }}">Editar</a>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item">No hay partidos.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
                     <h2 class="h5 mb-0">Grupos</h2>
                     <a class="btn btn-primary btn-sm" href="{{ path('admin_group_new') }}">Nuevo grupo</a>
                 </div>
@@ -158,24 +185,6 @@
             </div>
         </div>
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h2 class="h5 mb-0">Partidos</h2>
-                    <a class="btn btn-primary btn-sm" href="{{ path('admin_fixture_new') }}">Nuevo partido</a>
-                </div>
-                <ul class="list-group">
-                    {% for fixture in fixtures %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>{{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} - <span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></span>
-                            <a class="btn btn-outline-dark btn-sm" href="{{ path('admin_fixture_edit', {id: fixture.id}) }}">Editar</a>
-                        </li>
-                    {% else %}
-                        <li class="list-group-item">No hay partidos.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}

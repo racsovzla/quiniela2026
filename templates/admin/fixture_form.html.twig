@@ -4,14 +4,75 @@
 
 {% block body %}
 <div class="row justify-content-center">
-    <div class="col-md-7">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h1 class="h4 mb-3">Partido</h1>
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-dark text-white py-3">
+                <h1 class="h5 mb-0 fw-semibold"><i class="bi bi-pencil-square me-2"></i>Editor de Partido</h1>
+            </div>
+            <div class="card-body p-4 p-md-5">
                 {{ form_start(form) }}
-                    {{ form_widget(form) }}
-                    <button class="btn btn-primary mt-3">Guardar</button>
-                    <a class="btn btn-link" href="{{ path('admin_dashboard') }}">Volver</a>
+                    
+                    <h5 class="border-bottom pb-2 mb-4 text-secondary">Equipos y Grupo</h5>
+                    <div class="row g-3 mb-4 align-items-center">
+                        <div class="col-md-5">
+                            {{ form_row(form.homeTeam, {
+                                'label': 'Equipo Local',
+                                'attr': {'class': 'form-select form-select-lg'}
+                            }) }}
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <span class="badge rounded-pill text-bg-light border px-3 py-2 text-secondary fw-bold">VS</span>
+                        </div>
+                        <div class="col-md-5">
+                            {{ form_row(form.awayTeam, {
+                                'label': 'Equipo Visitante',
+                                'attr': {'class': 'form-select form-select-lg'}
+                            }) }}
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            {{ form_row(form.group, {
+                                'label': 'Grupo',
+                                'attr': {'class': 'form-select'}
+                            }) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.kickoffAt, {
+                                'label': 'Fecha y Hora (UTC)',
+                                'attr': {'class': 'form-control'}
+                            }) }}
+                        </div>
+                    </div>
+
+                    <h5 class="border-bottom pb-2 mb-4 mt-5 text-secondary">Estado y Resultado</h5>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            {{ form_row(form.status, {
+                                'label': 'Estado del Partido',
+                                'attr': {'class': 'form-select'}
+                            }) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form_row(form.homeScore, {
+                                'label': 'Goles Local',
+                                'attr': {'class': 'form-control text-center fs-4 fw-bold', 'placeholder': '-'}
+                            }) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form_row(form.awayScore, {
+                                'label': 'Goles Visitante',
+                                'attr': {'class': 'form-control text-center fs-4 fw-bold', 'placeholder': '-'}
+                            }) }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-5 pt-3 border-top">
+                        <a class="btn btn-outline-secondary px-4" href="{{ path('admin_dashboard') }}">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-5 fw-semibold">Guardar Partido</button>
+                    </div>
+
                 {{ form_end(form) }}
             </div>
         </div>

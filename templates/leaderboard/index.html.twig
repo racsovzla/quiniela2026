@@ -157,6 +157,7 @@
                             <button type="button" class="btn btn-outline-dark btn-sm" data-close-predictions="{{ modalId }}">Cerrar</button>
                         </div>
                         <div class="prediction-modal__body">
+                            <p class="text-body-secondary small mb-3">Aquí solo se muestran predicciones de partidos ya cerrados a edición.</p>
                             <div class="table-responsive">
                                 <table class="table table-sm mb-0">
                                     <thead>
@@ -181,7 +182,7 @@
                                             </tr>
                                         {% else %}
                                             <tr>
-                                                <td colspan="4" class="text-center py-3">No hay predicciones para este grupo.</td>
+                                                <td colspan="4" class="text-center py-3 text-body-secondary">No hay predicciones de partidos cerrados en este grupo.</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
