@@ -44,9 +44,44 @@ class LeaderboardController extends AbstractController
 
         $predictionsByGroup = [];
         foreach ($predictionRepository->findClosedWithFixtureAndUserOrderedForGroups($nowUtc) as $prediction) {
-            $groupCode = $prediction->getFixture()?->getGroup()?->getCode() ?? '-';
-            $predictionsByGroup[$groupCode][] = $prediction;
+            $fixture = $prediction->getFixture();
+            if (!$fixture) {
+                continue;
+            }
+            $groupCode = $fixture->getGroup()?->getCode() ?? '-';
+            $fixtureId = $fixture->getId();
+            if (!isset($predictionsByGroup[$groupCode][$fixtureId])) {
+                $predictionsByGroup[$groupCode][$fixtureId] = [
+                    'fixture' => $fixture,
+                    'predictions' => [],
+                ];
+            }
+            $predictionsByGroup[$groupCode][$fixtureId]['predictions'][] = $prediction;
         }
+
+        // Sort fixtures under each group code:
+        // - Scheduled matches first (kickoffAt ASC, i.e., soonest first)
+        // - Finished matches last (kickoffAt DESC, i.e., most recently played first)
+        foreach ($predictionsByGroup as $groupCode => &$fixtures) {
+            uasort($fixtures, function ($a, $b) {
+                $fixA = $a['fixture'];
+                $fixB = $b['fixture'];
+
+                if ($fixA->getStatus() !== $fixB->getStatus()) {
+                    return $fixA->getStatus() === \App\Entity\Fixture::STATUS_SCHEDULED ? -1 : 1;
+                }
+
+                $timeA = $fixA->getKickoffAt()->getTimestamp();
+                $timeB = $fixB->getKickoffAt()->getTimestamp();
+
+                if ($fixA->getStatus() === \App\Entity\Fixture::STATUS_SCHEDULED) {
+                    return $timeA <=> $timeB;
+                } else {
+                    return $timeB <=> $timeA;
+                }
+            });
+        }
+        unset($fixtures);
 
         $rows = $this->withSharedPositions($scoringService->leaderboard());
         $weeklyRows = $this->withSharedPositions($scoringService->weeklyLeaderboard($nowUtc, 7));
@@ -59,6 +94,7 @@ class LeaderboardController extends AbstractController
             'nextFixture' => $fixtureRepository->findNextScheduledFixture(),
             'fixturesByGroup' => $fixturesByGroup,
             'predictionsByGroup' => $predictionsByGroup,
+            'scoringService' => $scoringService,
         ]);
     }
 

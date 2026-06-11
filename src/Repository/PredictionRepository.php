@@ -76,7 +76,9 @@ class PredictionRepository extends ServiceEntityRepository
             ->setParameter('closingThreshold', $closingThreshold)
             ->setParameter('finishedStatus', Fixture::STATUS_FINISHED)
             ->addOrderBy('g.code', 'ASC')
+            ->addOrderBy('f.status', 'DESC') // 'scheduled' comes before 'finished' alphabetically when sorting descending
             ->addOrderBy('f.kickoffAt', 'ASC')
+            ->addOrderBy('f.id', 'ASC')
             ->addOrderBy('u.name', 'ASC')
             ->getQuery()
             ->getResult();
