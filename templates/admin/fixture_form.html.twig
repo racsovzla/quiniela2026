@@ -76,6 +76,73 @@
                 {{ form_end(form) }}
             </div>
         </div>
+
+        {% if predictions is defined %}
+            <div class="card shadow-sm border-0 rounded-3 mt-4">
+                <div class="card-header bg-dark text-white py-3">
+                    <h2 class="h5 mb-0 fw-semibold"><i class="bi bi-card-list me-2"></i>Predicciones de los Usuarios</h2>
+                </div>
+                <div class="card-body p-4">
+                    {% if predictions is not empty or missingUsers is not empty %}
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h3 class="h6 border-bottom pb-2 mb-3 text-secondary"><i class="bi bi-check-circle-fill text-success me-1"></i>Cargadas ({{ predictions|length }})</h3>
+                                {% if predictions is not empty %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle table-hover mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Participante</th>
+                                                    <th class="text-center">Predicción</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for prediction in predictions %}
+                                                    <tr>
+                                                        <td>{{ prediction.user.name }}</td>
+                                                        <td class="text-center fw-bold text-primary">{{ prediction.predictedHomeScore }} - {{ prediction.predictedAwayScore }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted small mb-0">Ningún participante ha cargado aún.</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <h3 class="h6 border-bottom pb-2 mb-3 text-secondary"><i class="bi bi-exclamation-circle-fill text-warning me-1"></i>Pendientes ({{ missingUsers|length }})</h3>
+                                {% if missingUsers is not empty %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle table-hover mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Participante</th>
+                                                    <th class="text-center">Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in missingUsers %}
+                                                    <tr>
+                                                        <td>{{ user.name }}</td>
+                                                        <td class="text-center"><span class="badge text-bg-warning">Pendiente</span></td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted small mb-0">¡Todos los participantes han cargado sus predicciones!</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0 text-center py-3">No hay participantes habilitados en el sistema.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

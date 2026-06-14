@@ -179,16 +179,40 @@ class AdminController extends AbstractController
     }
 
     #[Route('/fixtures/{id}/edit', name: 'admin_fixture_edit')]
-    public function editFixture(Fixture $fixture, Request $request, EntityManagerInterface $entityManager): Response
+    public function editFixture(
+        Fixture $fixture,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        PredictionRepository $predictionRepository,
+        UserRepository $userRepository,
+    ): Response
     {
         $form = $this->createForm(FixtureType::class, $fixture);
         $form->handleRequest($request);
+
+        $predictions = $predictionRepository->findByFixtureWithUser($fixture);
+        $allUsers = $userRepository->findApprovedVerifiedRecipients();
+        $predictedUserIds = [];
+        foreach ($predictions as $prediction) {
+            $predictedUserIds[$prediction->getUser()?->getId()] = true;
+        }
+
+        $missingUsers = [];
+        foreach ($allUsers as $user) {
+            if (!isset($predictedUserIds[$user->getId()])) {
+                $missingUsers[] = $user;
+            }
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             if ($fixture->getHomeTeam()?->getId() === $fixture->getAwayTeam()?->getId()) {
                 $this->addFlash('error', 'Local y visitante no pueden ser el mismo equipo.');
 
-                return $this->render('admin/fixture_form.html.twig', ['form' => $form]);
+                return $this->render('admin/fixture_form.html.twig', [
+                    'form' => $form,
+                    'predictions' => $predictions,
+                    'missingUsers' => $missingUsers,
+                ]);
             }
 
             $entityManager->flush();
@@ -196,7 +220,11 @@ class AdminController extends AbstractController
             return $this->redirectToRoute('admin_dashboard');
         }
 
-        return $this->render('admin/fixture_form.html.twig', ['form' => $form]);
+        return $this->render('admin/fixture_form.html.twig', [
+            'form' => $form,
+            'predictions' => $predictions,
+            'missingUsers' => $missingUsers,
+        ]);
     }
 
     #[Route('/simulation/seed', name: 'admin_simulation_seed', methods: ['POST'])]

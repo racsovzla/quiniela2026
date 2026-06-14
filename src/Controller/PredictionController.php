@@ -66,21 +66,14 @@ class PredictionController extends AbstractController
             }
         }
 
-        usort($fixtures, function($a, $b) use ($predictionByFixture) {
-            $aId = $a->getId();
-            $bId = $b->getId();
-            
-            $aHas = isset($predictionByFixture[$aId]) && 
-                    $predictionByFixture[$aId]->getPredictedHomeScore() !== null &&
-                    $predictionByFixture[$aId]->getPredictedAwayScore() !== null;
-            $bHas = isset($predictionByFixture[$bId]) && 
-                    $predictionByFixture[$bId]->getPredictedHomeScore() !== null &&
-                    $predictionByFixture[$bId]->getPredictedAwayScore() !== null;
-            
-            if ($aHas !== $bHas) {
-                return $aHas ? 1 : -1;
+        usort($fixtures, function(Fixture $a, Fixture $b) use ($fixtureCanEdit) {
+            $aCanEdit = $fixtureCanEdit[$a->getId()] ?? false;
+            $bCanEdit = $fixtureCanEdit[$b->getId()] ?? false;
+
+            if ($aCanEdit !== $bCanEdit) {
+                return $aCanEdit ? -1 : 1;
             }
-            
+
             return $a->getKickoffAt() <=> $b->getKickoffAt();
         });
 

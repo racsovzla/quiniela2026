@@ -26,7 +26,10 @@
 
 <div class="row g-4 align-items-start">
     <div class="col-lg-4">
-        <h2 class="h5 mb-2">Usuarios</h2>
+        <div class="mb-2 d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Usuarios</h2>
+            <span class="badge bg-primary">Faltan {{ remainingCount }} partido{{ remainingCount == 1 ? '' : 's' }} sin finalizar</span>
+        </div>
         <p class="screen-note mb-2">Los <strong>+X</strong> son puntos en vivo antes del cierre. El ranking oficial se fija cuando el partido finaliza.</p>
         <div class="table-responsive bg-white border rounded-3 shadow-sm">
             <table class="table mb-0">
@@ -65,30 +68,6 @@
                         </tr>
                     {% else %}
                         <tr><td colspan="4" class="text-center py-4">Sin datos todavía.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
- 
-        <h2 class="h5 mt-3 mb-2">Ranking de los últimos 7 días</h2>
-        <div class="table-responsive bg-white border rounded-3 shadow-sm">
-            <table class="table mb-0">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Participante</th>
-                        <th class="text-center">Puntos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in weeklyRows %}
-                        <tr>
-                            <td>{{ row.rank }}</td>
-                            <td>{{ row.name }}</td>
-                            <td class="text-center"><strong>{{ row.points }}</strong></td>
-                        </tr>
-                    {% else %}
-                        <tr><td colspan="3" class="text-center py-4">Aún sin partidos finalizados esta semana.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

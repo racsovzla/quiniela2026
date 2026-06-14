@@ -62,7 +62,9 @@
                     <input type="number" min="0" inputmode="numeric" name="home" class="form-control prediction-score-input" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
                     <span class="prediction-form-separator">-</span>
                     <input type="number" min="0" inputmode="numeric" name="away" class="form-control prediction-score-input" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
-                    <button class="btn btn-sm prediction-form-submit {{ p ? 'btn-outline-primary' : 'btn-primary' }}" {{ formDisabled ? 'disabled' : '' }}>{{ p ? 'Editar' : 'Guardar' }}</button>
+                    {% if canEditFixture %}
+                        <button class="btn btn-sm prediction-form-submit {{ p ? 'btn-outline-primary' : 'btn-primary' }}" {{ formDisabled ? 'disabled' : '' }}>{{ p ? 'Editar' : 'Guardar' }}</button>
+                    {% endif %}
                     <span class="prediction-feedback pt-2" aria-live="polite"></span>
                 </form>
             </td>

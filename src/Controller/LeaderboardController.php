@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Fixture;
 use App\Repository\FixtureRepository;
 use App\Repository\PredictionRepository;
 use App\Service\ScoringService;
@@ -84,11 +85,11 @@ class LeaderboardController extends AbstractController
         unset($fixtures);
 
         $rows = $this->withSharedPositions($scoringService->leaderboard());
-        $weeklyRows = $this->withSharedPositions($scoringService->weeklyLeaderboard($nowUtc, 7));
+        $remainingCount = $fixtureRepository->count(['status' => Fixture::STATUS_SCHEDULED]);
 
         return $this->render('leaderboard/index.html.twig', [
             'rows' => $rows,
-            'weeklyRows' => $weeklyRows,
+            'remainingCount' => $remainingCount,
             'streakByUser' => $scoringService->activeStreakByUser(),
             'livePointsByUser' => $scoringService->livePointsByUser($nowUtc),
             'nextFixture' => $fixtureRepository->findNextScheduledFixture(),
