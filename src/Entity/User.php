@@ -54,6 +54,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $emailVerificationExpiresAt = null;
 
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $passwordResetToken = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $passwordResetExpiresAt = null;
+
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $paymentValidatedAt = null;
 
@@ -203,6 +209,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmailVerificationExpiresAt(?\DateTimeImmutable $emailVerificationExpiresAt): static
     {
         $this->emailVerificationExpiresAt = $emailVerificationExpiresAt;
+
+        return $this;
+    }
+
+    public function getPasswordResetToken(): ?string
+    {
+        return $this->passwordResetToken;
+    }
+
+    public function setPasswordResetToken(?string $passwordResetToken): static
+    {
+        $this->passwordResetToken = $passwordResetToken;
+
+        return $this;
+    }
+
+    public function getPasswordResetExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->passwordResetExpiresAt;
+    }
+
+    public function setPasswordResetExpiresAt(?\DateTimeImmutable $passwordResetExpiresAt): static
+    {
+        $this->passwordResetExpiresAt = $passwordResetExpiresAt;
 
         return $this;
     }

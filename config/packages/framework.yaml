@@ -22,6 +22,10 @@ framework:
             policy: 'sliding_window'
             limit: 3
             interval: '30 minutes'
+        password_reset_request:
+            policy: 'sliding_window'
+            limit: 3
+            interval: '30 minutes'
 
 when@test:
     framework:

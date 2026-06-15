@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mi cuenta{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="h4 mb-1">Mi cuenta</h2>
+                <p class="text-body-secondary mb-4">Actualiza tu nombre a mostrar o cambia tu contraseña.</p>
+
+                <div class="mb-4">
+                    <label class="form-label text-body-secondary small mb-1">Correo</label>
+                    <p class="mb-0 fw-semibold">{{ userEmail }}</p>
+                </div>
+
+                {{ form_start(profileForm, {attr: {class: 'auth-form'}}) }}
+                    <div class="auth-field mb-3">
+                        {{ form_label(profileForm.name, null, {label_attr: {class: 'form-label'}}) }}
+                        {{ form_widget(profileForm.name, {attr: {class: 'form-control'}}) }}
+                        {{ form_errors(profileForm.name) }}
+                    </div>
+
+                    <hr class="my-4">
+
+                    <p class="small text-body-secondary mb-3">Deja los campos de contraseña vacíos si no quieres cambiarla.</p>
+
+                    <div class="auth-field mb-3">
+                        {{ form_label(profileForm.currentPassword, null, {label_attr: {class: 'form-label'}}) }}
+                        {{ form_widget(profileForm.currentPassword, {attr: {class: 'form-control'}}) }}
+                        {{ form_errors(profileForm.currentPassword) }}
+                    </div>
+
+                    <div class="auth-field mb-3">
+                        {{ form_label(profileForm.plainPassword.first, null, {label_attr: {class: 'form-label'}}) }}
+                        {{ form_widget(profileForm.plainPassword.first, {attr: {class: 'form-control'}}) }}
+                        {{ form_errors(profileForm.plainPassword.first) }}
+                    </div>
+
+                    <div class="auth-field mb-3">
+                        {{ form_label(profileForm.plainPassword.second, null, {label_attr: {class: 'form-label'}}) }}
+                        {{ form_widget(profileForm.plainPassword.second, {attr: {class: 'form-control'}}) }}
+                        {{ form_errors(profileForm.plainPassword.second) }}
+                        {{ form_errors(profileForm.plainPassword) }}
+                    </div>
+
+                    <button class="btn btn-primary w-100">Guardar cambios</button>
+                {{ form_end(profileForm) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

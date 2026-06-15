@@ -62,6 +62,7 @@
                         <a class="nav-link" href="{{ path('app_predictions') }}">Predicciones</a>
                         <a class="nav-link" href="{{ path('app_leaderboard') }}">Tabla de posiciones</a>
                         <a class="nav-link" href="{{ path('app_rules') }}">Reglas</a>
+                        <a class="nav-link" href="{{ path('app_profile') }}">Mi cuenta</a>
                         {% if is_granted('ROLE_ADMIN') %}
                             <a class="nav-link" href="{{ path('admin_dashboard') }}">Admin</a>
                         {% endif %}
