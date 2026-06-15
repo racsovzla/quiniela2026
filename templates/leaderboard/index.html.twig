@@ -31,6 +31,25 @@
             <span class="badge bg-primary">Faltan {{ remainingCount }} partido{{ remainingCount == 1 ? '' : 's' }} sin finalizar</span>
         </div>
         <p class="screen-note mb-2">Los <strong>+X</strong> son puntos en vivo antes del cierre. El ranking oficial se fija cuando el partido finaliza.</p>
+        <svg style="display: none;">
+            <defs>
+                <linearGradient id="goldMedalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fff2a3" />
+                    <stop offset="50%" stop-color="#f5b700" />
+                    <stop offset="100%" stop-color="#b8860b" />
+                </linearGradient>
+                <linearGradient id="silverMedalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff" />
+                    <stop offset="50%" stop-color="#cccccc" />
+                    <stop offset="100%" stop-color="#8e8e8e" />
+                </linearGradient>
+                <linearGradient id="bronzeMedalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffd5bf" />
+                    <stop offset="50%" stop-color="#cd7f32" />
+                    <stop offset="100%" stop-color="#8c4f1a" />
+                </linearGradient>
+            </defs>
+        </svg>
         <div class="table-responsive bg-white border rounded-3 shadow-sm">
             <table class="table mb-0">
                 <thead>
@@ -46,7 +65,35 @@
                         {% set livePoints = livePointsByUser[row.userId]|default(0) %}
                         {% set streak = streakByUser[row.userId]|default(0) %}
                         <tr class="{{ app.user and row.userId == app.user.id ? 'table-row-current-user' : '' }}">
-                            <td>{{ row.rank }}</td>
+                            <td>
+                                {% if row.rank == 1 %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" class="flex-shrink-0" style="vertical-align: -0.25em;">
+                                        <path d="M8 11L5 2h5l2 5 2-5h5l-3 9z" fill="#d32f2f" />
+                                        <path d="M10 2h4v8h-4z" fill="#ffffff" />
+                                        <circle cx="12" cy="15" r="6" fill="url(#goldMedalGrad)" stroke="#ffd700" stroke-width="0.8" />
+                                        <circle cx="12" cy="15" r="4.5" fill="none" stroke="#ffffff" stroke-width="0.6" opacity="0.4" />
+                                        <text x="12" y="15" font-family="'Manrope', 'Segoe UI', sans-serif" font-size="9" font-weight="900" fill="#ffffff" stroke="#5c4300" stroke-width="0.6" paint-order="stroke fill" text-anchor="middle" dominant-baseline="central">1</text>
+                                    </svg>
+                                {% elseif row.rank == 2 %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" class="flex-shrink-0" style="vertical-align: -0.25em;">
+                                        <path d="M8 11L5 2h5l2 5 2-5h5l-3 9z" fill="#1976d2" />
+                                        <path d="M10 2h4v8h-4z" fill="#ffffff" />
+                                        <circle cx="12" cy="15" r="6" fill="url(#silverMedalGrad)" stroke="#e0e0e0" stroke-width="0.8" />
+                                        <circle cx="12" cy="15" r="4.5" fill="none" stroke="#ffffff" stroke-width="0.6" opacity="0.4" />
+                                        <text x="12" y="15" font-family="'Manrope', 'Segoe UI', sans-serif" font-size="9" font-weight="900" fill="#ffffff" stroke="#333333" stroke-width="0.6" paint-order="stroke fill" text-anchor="middle" dominant-baseline="central">2</text>
+                                    </svg>
+                                {% elseif row.rank == 3 %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" class="flex-shrink-0" style="vertical-align: -0.25em;">
+                                        <path d="M8 11L5 2h5l2 5 2-5h5l-3 9z" fill="#388e3c" />
+                                        <path d="M10 2h4v8h-4z" fill="#ffffff" />
+                                        <circle cx="12" cy="15" r="6" fill="url(#bronzeMedalGrad)" stroke="#c5835c" stroke-width="0.8" />
+                                        <circle cx="12" cy="15" r="4.5" fill="none" stroke="#ffffff" stroke-width="0.6" opacity="0.4" />
+                                        <text x="12" y="15" font-family="'Manrope', 'Segoe UI', sans-serif" font-size="9" font-weight="900" fill="#ffffff" stroke="#3e1f00" stroke-width="0.6" paint-order="stroke fill" text-anchor="middle" dominant-baseline="central">3</text>
+                                    </svg>
+                                {% else %}
+                                    {{ row.rank }}
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if row.rank == 1 %}
                                     <strong style="color: #D4AF37;">{{ row.name }}</strong>
