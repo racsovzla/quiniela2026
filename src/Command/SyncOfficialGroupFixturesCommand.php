@@ -6,6 +6,7 @@ use App\Entity\Fixture;
 use App\Repository\FixtureRepository;
 use App\Repository\TeamRepository;
 use App\Repository\TournamentGroupRepository;
+use App\Service\FifaCalendarClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -13,7 +14,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[AsCommand(
     name: 'app:sync-official-group-fixtures',
@@ -21,10 +21,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 )]
 class SyncOfficialGroupFixturesCommand extends Command
 {
-    private const API_URL = 'https://api.fifa.com/api/v3/calendar/matches?language=en&idCompetition=17&idSeason=285023&idStage=289273&count=400';
-
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
+        private readonly FifaCalendarClient $fifaCalendarClient,
         private readonly EntityManagerInterface $entityManager,
         private readonly TournamentGroupRepository $groupRepository,
         private readonly TeamRepository $teamRepository,
@@ -44,19 +42,12 @@ class SyncOfficialGroupFixturesCommand extends Command
         $dryRun = (bool) $input->getOption('dry-run');
 
         $io->title('Sync Official FIFA Group Fixtures');
-        $io->text('Source: '.self::API_URL);
+        $io->text('Source: '.FifaCalendarClient::GROUP_STAGE_API_URL);
 
         try {
-            $response = $this->httpClient->request('GET', self::API_URL);
-            $payload = $response->toArray();
-        } catch (\Throwable $exception) {
-            $io->error('Could not fetch FIFA API: '.$exception->getMessage());
-
-            return Command::FAILURE;
-        }
-
-        if (!isset($payload['Results']) || !is_array($payload['Results'])) {
-            $io->error('Unexpected FIFA API payload. Missing Results array.');
+            $rows = $this->fifaCalendarClient->fetchGroupStageMatches();
+        } catch (\RuntimeException $exception) {
+            $io->error($exception->getMessage());
 
             return Command::FAILURE;
         }
@@ -66,8 +57,8 @@ class SyncOfficialGroupFixturesCommand extends Command
         $unchanged = 0;
         $skipped = 0;
 
-        foreach ($payload['Results'] as $row) {
-            $groupCode = $this->extractGroupCode($row);
+        foreach ($rows as $row) {
+            $groupCode = $this->fifaCalendarClient->extractGroupCode($row);
             $homeCode = $row['Home']['Abbreviation'] ?? null;
             $awayCode = $row['Away']['Abbreviation'] ?? null;
             $kickoffUtc = $row['Date'] ?? null;
@@ -138,26 +129,5 @@ class SyncOfficialGroupFixturesCommand extends Command
         $io->success('Official fixtures sync completed.');
 
         return Command::SUCCESS;
-    }
-
-    private function extractGroupCode(array $row): ?string
-    {
-        $descriptions = $row['GroupName'] ?? [];
-        if (!is_array($descriptions)) {
-            return null;
-        }
-
-        foreach ($descriptions as $description) {
-            $text = $description['Description'] ?? null;
-            if (!is_string($text)) {
-                continue;
-            }
-
-            if (preg_match('/Group\s+([A-Z])/i', $text, $matches) === 1) {
-                return strtoupper($matches[1]);
-            }
-        }
-
-        return null;
     }
 }

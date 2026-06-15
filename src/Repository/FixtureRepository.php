@@ -111,6 +111,25 @@ class FixtureRepository extends ServiceEntityRepository
     }
 
     /**
+     * Scheduled fixtures whose kickoff has passed (in progress or pending catch-up).
+     *
+     * @return list<Fixture>
+     */
+    public function findScheduledPotentiallyLive(\DateTimeImmutable $nowUtc): array
+    {
+        return $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->andWhere('f.status = :status')
+            ->andWhere('f.kickoffAt <= :now')
+            ->setParameter('status', Fixture::STATUS_SCHEDULED)
+            ->setParameter('now', $nowUtc)
+            ->orderBy('f.kickoffAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Fixtures whose prediction window closed (kickoff - 5 min) and email not sent yet.
      *
      * @return list<Fixture>

@@ -8,7 +8,7 @@ ENV APP_DEBUG=0
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git unzip libicu-dev libzip-dev libpq-dev fonts-noto-color-emoji \
-    && docker-php-ext-install intl pdo pdo_mysql pdo_pgsql zip opcache \
+    && docker-php-ext-install intl pdo pdo_pgsql zip opcache \
     && a2enmod rewrite headers \
     && sed -ri -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/*.conf \
     && sed -ri -e "s!/var/www/!${APP_DIR}/!g" /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \

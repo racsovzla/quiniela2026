@@ -8,7 +8,7 @@ app_port: 7860
 pinned: false
 ---
 
-# Quiniela FIFA 2026 (Symfony + MySQL)
+# Quiniela FIFA 2026 (Symfony + PostgreSQL)
 
 Implementacion inicial MVP.
 
@@ -33,9 +33,9 @@ Implementacion inicial MVP.
 
 - PHP 8.4+
 - Composer
-- MySQL en localhost:3306
+- PostgreSQL en localhost:5432
 - DB: quiniela2026
-- Usuario DB: root sin password
+- Usuario DB: ver `.env.local` (ej. `postgres`)
 - SMTP dev recomendado: Mailpit o Mailhog (ejemplo: 127.0.0.1:1025)
 
 ## Entornos y secretos
@@ -175,7 +175,7 @@ Ejemplo minimo de variables de entorno para prod:
 APP_ENV=prod
 APP_DEBUG=0
 APP_SECRET=pon_aqui_un_secreto_largo_y_random
-DATABASE_URL="mysql://app_user:STRONG_PASSWORD@127.0.0.1:3306/quiniela2026?serverVersion=8.0.32&charset=utf8mb4"
+DATABASE_URL="postgresql://app_user:STRONG_PASSWORD@127.0.0.1:5432/quiniela2026?serverVersion=16&charset=utf8"
 MAILER_DSN="smtp://tu_cuenta@gmail.com:TU_APP_PASSWORD@smtp.gmail.com:587?encryption=tls&auth_mode=login"
 MAILER_FROM_EMAIL=tu_cuenta@gmail.com
 MAILER_FROM_NAME="Quiniela 2026"

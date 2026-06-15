@@ -1,7 +1,7 @@
 # Triggered by cron-job.org (every 5 min) or manually from GitHub Actions UI.
 #
 # cron-job.org setup:
-#   URL:    https://api.github.com/repos/racsovzla/quiniela2026/actions/workflows/send-prediction-emails.yml/dispatches
+#   URL:    https://api.github.com/repos/racsovzla/quiniela2026/actions/workflows/sync-live-fixture-scores.yml/dispatches
 #   Method: POST
 #   Headers:
 #     Authorization: Bearer <GITHUB_PAT with actions:write>
@@ -9,17 +9,17 @@
 #     X-GitHub-Api-Version: 2022-11-28
 #   Body (JSON): {"ref":"master"}
 #   Schedule: every 5 minutes
-name: Send due prediction emails
+name: Sync live fixture scores
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: send-prediction-emails
+  group: sync-live-fixture-scores
   cancel-in-progress: false
 
 jobs:
-  send-due-prediction-emails:
+  sync-live-fixture-scores:
     runs-on: ubuntu-latest
     env:
       APP_ENV: prod
@@ -46,5 +46,5 @@ jobs:
       - name: Run pending migrations
         run: php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod
 
-      - name: Send due prediction emails
-        run: php bin/console app:send-due-prediction-emails --env=prod
+      - name: Sync live fixture scores
+        run: php bin/console app:sync-live-fixture-scores --env=prod
