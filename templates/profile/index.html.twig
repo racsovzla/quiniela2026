@@ -8,7 +8,12 @@
         <div class="card shadow-sm">
             <div class="card-body p-4 p-md-5">
                 <h2 class="h4 mb-1">Mi cuenta</h2>
-                <p class="text-body-secondary mb-4">Actualiza tu nombre a mostrar o cambia tu contraseña.</p>
+                <p class="text-body-secondary mb-4">Actualiza tu contraseña.</p>
+
+                <div class="mb-3">
+                    <label class="form-label text-body-secondary small mb-1">Nombre</label>
+                    <p class="mb-0 fw-semibold">{{ app.user.name }}</p>
+                </div>
 
                 <div class="mb-4">
                     <label class="form-label text-body-secondary small mb-1">Correo</label>
@@ -16,11 +21,6 @@
                 </div>
 
                 {{ form_start(profileForm, {attr: {class: 'auth-form'}}) }}
-                    <div class="auth-field mb-3">
-                        {{ form_label(profileForm.name, null, {label_attr: {class: 'form-label'}}) }}
-                        {{ form_widget(profileForm.name, {attr: {class: 'form-control'}}) }}
-                        {{ form_errors(profileForm.name) }}
-                    </div>
 
                     <hr class="my-4">
 

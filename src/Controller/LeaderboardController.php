@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Fixture;
+use App\Entity\User;
 use App\Repository\FixtureRepository;
 use App\Repository\PredictionRepository;
 use App\Service\ScoringService;
@@ -96,6 +97,74 @@ class LeaderboardController extends AbstractController
             'fixturesByGroup' => $fixturesByGroup,
             'predictionsByGroup' => $predictionsByGroup,
             'scoringService' => $scoringService,
+        ]);
+    }
+
+    #[Route('/leaderboard/user/{id}/audit', name: 'app_leaderboard_user_audit', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function userAudit(
+        User $user,
+        FixtureRepository $fixtureRepository,
+        PredictionRepository $predictionRepository,
+        ScoringService $scoringService,
+    ): Response {
+        $nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $closingThreshold = $nowUtc->modify('+5 minutes');
+
+        // Fetch fixtures that are closed
+        $fixtures = $fixtureRepository->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->leftJoin('f.group', 'g')->addSelect('g')
+            ->andWhere('f.kickoffAt <= :closingThreshold OR f.status = :finishedStatus')
+            ->setParameter('closingThreshold', $closingThreshold)
+            ->setParameter('finishedStatus', Fixture::STATUS_FINISHED)
+            ->orderBy('f.kickoffAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $predictions = $predictionRepository->findByUserWithFixture($user);
+        $predictionsByFixtureId = [];
+        foreach ($predictions as $prediction) {
+            if ($prediction->getFixture()) {
+                $predictionsByFixtureId[$prediction->getFixture()->getId()] = $prediction;
+            }
+        }
+
+        $leaderboard = $scoringService->leaderboard();
+        $userRow = null;
+        foreach ($leaderboard as $row) {
+            if ($row['userId'] === $user->getId()) {
+                $userRow = $row;
+                break;
+            }
+        }
+        $userPoints = $userRow ? $userRow['points'] : 0;
+
+        $auditSum = 0;
+        $rows = [];
+        foreach ($fixtures as $fixture) {
+            $prediction = $predictionsByFixtureId[$fixture->getId()] ?? null;
+            $pts = 0;
+            if ($fixture->getStatus() === Fixture::STATUS_FINISHED && $prediction) {
+                $pts = $scoringService->calculatePoints($prediction);
+                $auditSum += $pts;
+            }
+            $rows[] = [
+                'fixture' => $fixture,
+                'prediction' => $prediction,
+                'points' => $pts,
+            ];
+        }
+
+        $pointsMismatch = ($auditSum !== $userPoints);
+
+        return $this->render('leaderboard/_user_audit.html.twig', [
+            'user' => $user,
+            'rows' => $rows,
+            'auditSum' => $auditSum,
+            'userPoints' => $userPoints,
+            'pointsMismatch' => $pointsMismatch,
         ]);
     }
 

@@ -3,7 +3,9 @@
 {% block title %}Tabla de posiciones{% endblock %}
 
 {% block body %}
-<h1 class="h3 mb-3">Tabla de posiciones</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0">Tabla de posiciones</h1>
+</div>
 
 {% if nextFixture %}
     <div class="card shadow-sm mb-3">
@@ -96,13 +98,13 @@
                             </td>
                             <td>
                                 {% if row.rank == 1 %}
-                                    <strong style="color: #D4AF37;">{{ row.name }}</strong>
+                                    <strong style="color: #D4AF37;"><a href="#" class="js-open-user-audit text-decoration-none" data-user-id="{{ row.userId }}" data-user-name="{{ row.name }}" style="color: inherit; cursor: pointer;">{{ row.name }}</a></strong>
                                 {% elseif row.rank == 2 %}
-                                    <strong style="color: #C0C0C0;">{{ row.name }}</strong>
+                                    <strong style="color: #C0C0C0;"><a href="#" class="js-open-user-audit text-decoration-none" data-user-id="{{ row.userId }}" data-user-name="{{ row.name }}" style="color: inherit; cursor: pointer;">{{ row.name }}</a></strong>
                                 {% elseif row.rank == 3 %}
-                                    <strong style="color: #CD7F32;">{{ row.name }}</strong>
+                                    <strong style="color: #CD7F32;"><a href="#" class="js-open-user-audit text-decoration-none" data-user-id="{{ row.userId }}" data-user-name="{{ row.name }}" style="color: inherit; cursor: pointer;">{{ row.name }}</a></strong>
                                 {% else %}
-                                    {{ row.name }}
+                                    <a href="#" class="js-open-user-audit text-decoration-none" data-user-id="{{ row.userId }}" data-user-name="{{ row.name }}" style="color: inherit; cursor: pointer;">{{ row.name }}</a>
                                 {% endif %}
                             </td>
                             <td class="text-center">
@@ -275,6 +277,19 @@
         </div>
     </div>
 </div>
+
+<div class="prediction-modal" id="user-audit-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="user-audit-modal-title">
+    <div class="prediction-modal__backdrop" data-close-predictions="user-audit-modal"></div>
+    <div class="prediction-modal__panel" role="document">
+        <div class="prediction-modal__header d-flex justify-content-between align-items-center gap-2">
+            <h3 class="h5 mb-0" id="user-audit-modal-title" style="color: var(--wc-accent);">Auditoría</h3>
+            <button type="button" class="btn btn-outline-light btn-sm" data-close-predictions="user-audit-modal">Cerrar</button>
+        </div>
+        <div class="prediction-modal__body" id="user-audit-modal-body">
+            <!-- Cargado dinámicamente -->
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
@@ -311,7 +326,51 @@
                 }
             };
 
+            const openUserAudit = (userId, userName) => {
+                const titleEl = document.getElementById('user-audit-modal-title');
+                const bodyEl = document.getElementById('user-audit-modal-body');
+                if (titleEl) {
+                    titleEl.textContent = `Auditoría: ${userName}`;
+                }
+                if (bodyEl) {
+                    bodyEl.innerHTML = `
+                        <div class="text-center py-5" style="color: var(--wc-muted);">
+                            <div class="spinner-border spinner-border-sm me-2 text-info" role="status"></div>
+                            <span>Cargando auditoría...</span>
+                        </div>
+                    `;
+                }
+                openModal('user-audit-modal');
+
+                fetch(`/leaderboard/user/${userId}/audit`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error al cargar la auditoría');
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        if (bodyEl) {
+                            bodyEl.innerHTML = html;
+                        }
+                    })
+                    .catch(err => {
+                        if (bodyEl) {
+                            bodyEl.innerHTML = `<div class="alert alert-danger m-3">${err.message}</div>`;
+                        }
+                    });
+            };
+
             document.addEventListener('click', (event) => {
+                const auditTrigger = event.target.closest('.js-open-user-audit');
+                if (auditTrigger) {
+                    event.preventDefault();
+                    const userId = auditTrigger.dataset.userId;
+                    const userName = auditTrigger.dataset.userName;
+                    openUserAudit(userId, userName);
+                    return;
+                }
+
                 const openTrigger = event.target.closest('[data-open-predictions]');
                 if (openTrigger) {
                     openModal(openTrigger.dataset.openPredictions);

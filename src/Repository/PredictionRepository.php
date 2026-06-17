@@ -127,6 +127,22 @@ class PredictionRepository extends ServiceEntityRepository
     /**
      * @return list<Prediction>
      */
+    public function findForFinishedFixturesWithUser(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p', 'u', 'f')
+            ->join('p.user', 'u')
+            ->join('p.fixture', 'f')
+            ->andWhere('f.status = :finishedStatus')
+            ->andWhere('f.homeScore IS NOT NULL AND f.awayScore IS NOT NULL')
+            ->setParameter('finishedStatus', Fixture::STATUS_FINISHED)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return list<Prediction>
+     */
     public function findFinishedOrderedByUserAndKickoffDesc(): array
     {
         return $this->createQueryBuilder('p')

@@ -137,6 +137,77 @@ class ScoringServiceTest extends TestCase
         self::assertSame(3, $service->calculatePoints($predictionAfter));
     }
 
+    public function testExactScoreAwardsThreePointsOnly(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+        $prediction = $this->buildPrediction('Alice', 1, 3, 1, 3, 1, $paymentAt);
+
+        self::assertSame(3, $service->calculatePoints($prediction));
+    }
+
+    public function testCorrectWinnerAwardsOnePoint(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+        $prediction = $this->buildPrediction('Alice', 1, 2, 0, 3, 1, $paymentAt);
+
+        self::assertSame(1, $service->calculatePoints($prediction));
+    }
+
+    public function testCorrectDrawAwardsOnePoint(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+        $prediction = $this->buildPrediction('Alice', 1, 1, 1, 0, 0, $paymentAt);
+
+        self::assertSame(1, $service->calculatePoints($prediction));
+    }
+
+    public function testWrongPredictionAwardsZeroPoints(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+        $prediction = $this->buildPrediction('Alice', 1, 0, 2, 2, 0, $paymentAt);
+
+        self::assertSame(0, $service->calculatePoints($prediction));
+    }
+
+    public function testLeaderboardTotalMatchesSumOfIndividualPredictions(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+        $predictions = [
+            $this->buildPrediction('Alice', 1, 2, 1, 2, 1, $paymentAt),
+            $this->buildPrediction('Alice', 1, 1, 0, 3, 0, $paymentAt),
+            $this->buildPrediction('Bob', 2, 0, 0, 1, 1, $paymentAt),
+            $this->buildPrediction('Bob', 2, 2, 2, 2, 2, $paymentAt),
+            $this->buildPrediction('Bob', 2, 1, 1, 0, 2, $paymentAt),
+        ];
+
+        $this->predictionRepository
+            ->expects(self::once())
+            ->method('findAll')
+            ->willReturn($predictions);
+
+        $rows = $service->leaderboard();
+
+        $expectedByUser = [];
+        foreach ($predictions as $prediction) {
+            $userId = $prediction->getUser()->getId();
+            $expectedByUser[$userId] = ($expectedByUser[$userId] ?? 0) + $service->calculatePoints($prediction);
+        }
+
+        foreach ($rows as $row) {
+            self::assertSame($expectedByUser[$row['userId']], $row['points']);
+        }
+    }
+
     private function buildPrediction(
         string $name,
         int $userId,

@@ -56,6 +56,23 @@ class FixtureRepository extends ServiceEntityRepository
     /**
      * @return list<Fixture>
      */
+    public function findFinishedOrdered(): array
+    {
+        return $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->leftJoin('f.group', 'g')->addSelect('g')
+            ->andWhere('f.status = :status')
+            ->andWhere('f.homeScore IS NOT NULL AND f.awayScore IS NOT NULL')
+            ->setParameter('status', Fixture::STATUS_FINISHED)
+            ->orderBy('f.kickoffAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return list<Fixture>
+     */
     public function findAllOrderedByGroupAndKickoff(): array
     {
         return $this->createQueryBuilder('f')

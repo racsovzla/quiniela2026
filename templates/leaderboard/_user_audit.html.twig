@@ -1,0 +1,85 @@
+<div class="p-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div class="text-secondary small">
+            Partidos cerrados · Suma auditada: <strong style="color: var(--wc-accent);">{{ auditSum }} pts</strong>
+        </div>
+        {% if pointsMismatch %}
+            <span class="badge bg-danger text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-exclamation-triangle-fill me-1" viewBox="0 0 16 16">
+                  <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                </svg>
+                Inconsistencia: Leaderboard muestra {{ userPoints }} pts
+            </span>
+        {% else %}
+            <span class="badge bg-success text-white">✓ Puntos verificados</span>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0" style="color: var(--wc-text); border-color: rgba(156, 179, 197, 0.15);">
+            <thead>
+                <tr class="small" style="font-size: 0.8rem; border-bottom: 1px solid rgba(156, 179, 197, 0.15); color: var(--wc-muted);">
+                    <th class="ps-3 py-2 border-0">Partido / Fecha</th>
+                    <th class="py-2 text-center border-0">Resultado Real</th>
+                    <th class="py-2 text-center border-0">Predicción</th>
+                    <th class="pe-3 py-2 text-end border-0">Puntos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    {% set fixture = row.fixture %}
+                    {% set prediction = row.prediction %}
+                    {% set points = row.points %}
+                    
+                    <tr style="border-bottom: 1px solid rgba(156, 179, 197, 0.08);">
+                        <td class="ps-3 py-2">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="fw-semibold text-white">
+                                    {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
+                                    <span style="color: var(--wc-muted); margin: 0 2px;">vs</span>
+                                    {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}
+                                </span>
+                                <span class="small text-muted ms-auto js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">
+                                    {{ fixture.kickoffAt|date('d/m H:i') }} UTC
+                                </span>
+                            </div>
+                        </td>
+                        <td class="py-2 text-center">
+                            {% if fixture.status == 'finished' %}
+                                <span class="badge bg-secondary text-white">{{ fixture.homeScore }} - {{ fixture.awayScore }}</span>
+                            {% elseif fixture.homeScore is not null and fixture.awayScore is not null %}
+                                <span class="badge bg-info text-dark">En curso: {{ fixture.homeScore }} - {{ fixture.awayScore }}</span>
+                            {% else %}
+                                <span class="badge text-bg-dark border border-secondary text-secondary">Programado</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-2 text-center">
+                            {% if prediction is not null %}
+                                <strong style="color: var(--wc-accent); font-size: 0.95rem;">{{ prediction.predictedHomeScore }} - {{ prediction.predictedAwayScore }}</strong>
+                            {% else %}
+                                <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-3 py-2 text-end">
+                            {% if fixture.status == 'finished' %}
+                                {% if points == 3 %}
+                                    <span class="badge bg-success text-white fw-bold" style="background-color: #198754 !important;">+3 pts</span>
+                                {% elseif points == 1 %}
+                                    <span class="badge bg-primary text-white fw-bold" style="background-color: #0d6efd !important;">+1 pt</span>
+                                {% else %}
+                                    <span class="badge bg-dark border border-secondary text-muted fw-normal">0 pts</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">No hay partidos cerrados todavía.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
