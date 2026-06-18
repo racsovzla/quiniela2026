@@ -169,4 +169,25 @@ class FixtureRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Find the next fixture whose prediction editing window has not closed yet.
+     */
+    public function findNextEditableFixture(\DateTimeImmutable $nowUtc): ?Fixture
+    {
+        $closingThreshold = $nowUtc->modify('+5 minutes');
+
+        return $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->andWhere('f.status = :status')
+            ->andWhere('f.kickoffAt > :closingThreshold')
+            ->setParameter('status', Fixture::STATUS_SCHEDULED)
+            ->setParameter('closingThreshold', $closingThreshold)
+            ->orderBy('f.kickoffAt', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }
+

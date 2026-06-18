@@ -9,6 +9,8 @@
 parameters:
     app.mailer_from_email: '%env(string:MAILER_FROM_EMAIL)%'
     app.mailer_from_name: '%env(string:MAILER_FROM_NAME)%'
+    app.callmebot_phone: '%env(string:CALLMEBOT_PHONE)%'
+    app.callmebot_apikey: '%env(string:CALLMEBOT_APIKEY)%'
 
 services:
     # default configuration for services in *this* file
@@ -32,3 +34,8 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Service\WhatsAppService:
+        arguments:
+            $phone: '%app.callmebot_phone%'
+            $apiKey: '%app.callmebot_apikey%'
+

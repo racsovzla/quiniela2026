@@ -93,7 +93,7 @@ class LeaderboardController extends AbstractController
             'remainingCount' => $remainingCount,
             'streakByUser' => $scoringService->activeStreakByUser(),
             'livePointsByUser' => $scoringService->livePointsByUser($nowUtc),
-            'nextFixture' => $fixtureRepository->findNextScheduledFixture(),
+            'nextFixture' => $fixtureRepository->findNextEditableFixture($nowUtc),
             'fixturesByGroup' => $fixturesByGroup,
             'predictionsByGroup' => $predictionsByGroup,
             'scoringService' => $scoringService,

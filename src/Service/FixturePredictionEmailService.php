@@ -15,6 +15,7 @@ class FixturePredictionEmailService
         private readonly MailerInterface $mailer,
         private readonly Address $mailerFromAddress,
         private readonly CountryNameResolver $countryNameResolver,
+        private readonly WhatsAppService $whatsAppService,
     ) {
     }
 
@@ -71,6 +72,17 @@ class FixturePredictionEmailService
             $this->mailer->send($email);
             ++$sentCount;
         }
+
+        $whatsappMessage = sprintf("Pronósticos para el partido %s vs %s:\n", $homeTeamName, $awayTeamName);
+        foreach ($summaryRows as $row) {
+            $whatsappMessage .= sprintf(
+                "- %s: %d - %d\n",
+                $row['name'],
+                $row['homeScore'],
+                $row['awayScore']
+            );
+        }
+        $this->whatsAppService->sendMessage(rtrim($whatsappMessage));
 
         return $sentCount;
     }

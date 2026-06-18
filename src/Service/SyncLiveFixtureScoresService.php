@@ -4,6 +4,8 @@ namespace App\Service;
 
 use App\Entity\Fixture;
 use App\Repository\FixtureRepository;
+use App\Repository\UserRepository;
+use App\Repository\PredictionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 class SyncLiveFixtureScoresService
@@ -12,6 +14,10 @@ class SyncLiveFixtureScoresService
         private readonly FixtureRepository $fixtureRepository,
         private readonly FifaCalendarClient $fifaCalendarClient,
         private readonly EntityManagerInterface $entityManager,
+        private readonly UserRepository $userRepository,
+        private readonly PredictionRepository $predictionRepository,
+        private readonly CountryNameResolver $countryNameResolver,
+        private readonly WhatsAppService $whatsAppService,
     ) {
     }
 
@@ -93,6 +99,51 @@ class SyncLiveFixtureScoresService
             $this->entityManager->flush();
         }
 
+        if (!$dryRun && $stats['finished'] > 0) {
+            $this->checkAndNotifyMissingPredictionsForNextFixture($nowUtc);
+        }
+
         return $stats;
+    }
+
+    private function checkAndNotifyMissingPredictionsForNextFixture(\DateTimeImmutable $nowUtc): void
+    {
+        $nextFixture = $this->fixtureRepository->findNextScheduledFixture();
+        if (null === $nextFixture) {
+            return;
+        }
+
+        $users = $this->userRepository->findApprovedVerifiedRecipients();
+        if ($users === []) {
+            return;
+        }
+
+        $missingUsers = [];
+        foreach ($users as $user) {
+            $prediction = $this->predictionRepository->findOneByUserAndFixture($user, $nextFixture);
+            if (null === $prediction) {
+                $missingUsers[] = $user->getName();
+            }
+        }
+
+        if ($missingUsers !== []) {
+            $homeTeam = $this->countryNameResolver->resolveSpanishName(
+                $nextFixture->getHomeTeam()?->getCode(),
+                $nextFixture->getHomeTeam()?->getName()
+            );
+            $awayTeam = $this->countryNameResolver->resolveSpanishName(
+                $nextFixture->getAwayTeam()?->getCode(),
+                $nextFixture->getAwayTeam()?->getName()
+            );
+
+            $message = sprintf(
+                "¡Atención! El partido siguiente %s vs %s se acerca y los siguientes usuarios aún no han hecho sus pronósticos:\n%s",
+                $homeTeam,
+                $awayTeam,
+                implode("\n", array_map(fn($name) => "- " . $name, $missingUsers))
+            );
+
+            $this->whatsAppService->sendMessage($message);
+        }
     }
 }
