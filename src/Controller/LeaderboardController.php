@@ -88,12 +88,19 @@ class LeaderboardController extends AbstractController
         $rows = $this->withSharedPositions($scoringService->leaderboard());
         $remainingCount = $fixtureRepository->count(['status' => Fixture::STATUS_SCHEDULED]);
 
+        $latestFinished = $fixtureRepository->findLatestFinished(6);
+        usort($latestFinished, function (\App\Entity\Fixture $a, \App\Entity\Fixture $b) {
+            return $a->getKickoffAt() <=> $b->getKickoffAt();
+        });
+
         return $this->render('leaderboard/index.html.twig', [
             'rows' => $rows,
             'remainingCount' => $remainingCount,
             'streakByUser' => $scoringService->activeStreakByUser(),
             'livePointsByUser' => $scoringService->livePointsByUser($nowUtc),
             'nextFixture' => $fixtureRepository->findNextEditableFixture($nowUtc),
+            'latestFinished' => $latestFinished,
+            'nextScheduled' => $fixtureRepository->findNextScheduled(6),
             'fixturesByGroup' => $fixturesByGroup,
             'predictionsByGroup' => $predictionsByGroup,
             'scoringService' => $scoringService,
@@ -117,7 +124,7 @@ class LeaderboardController extends AbstractController
             ->leftJoin('f.awayTeam', 'at')->addSelect('at')
             ->leftJoin('f.group', 'g')->addSelect('g')
             ->andWhere('f.kickoffAt <= :closingThreshold OR f.status = :finishedStatus')
-            ->setParameter('closingThreshold', $closingThreshold)
+            ->setParameter('closingThreshold', $closingThreshold->format('Y-m-d H:i:s'))
             ->setParameter('finishedStatus', Fixture::STATUS_FINISHED)
             ->orderBy('f.kickoffAt', 'ASC')
             ->getQuery()

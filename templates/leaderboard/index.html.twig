@@ -122,8 +122,105 @@
             </table>
         </div>
     </div>
-
     <div class="col-lg-8">
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold">
+                        Próximos partidos
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0 group-fixtures-table">
+                                <tbody>
+                                    {% for fixture in nextScheduled %}
+                                        {% set kickoffTs = fixture.kickoffAt|date('U') %}
+                                        {% set nowTs = 'now'|date('U') %}
+                                        {% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null %}
+                                        {% set isInProgress = fixture.status == 'scheduled' and (kickoffTs <= nowTs or hasLoadedScore) %}
+                                        {% set isFinished = fixture.status == 'finished' %}
+                                        <tr>
+                                            <td class="fw-semibold team-cell team-cell-home">
+                                                {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
+                                            </td>
+                                            <td class="text-center fw-bold score-cell">
+                                                {% if isFinished %}
+                                                    <small class="d-block mb-1"><span class="badge text-bg-secondary">Finalizado</span></small>
+                                                {% elseif isInProgress %}
+                                                    <small class="d-block mb-1"><span class="badge text-bg-info">En curso</span></small>
+                                                {% endif %}
+                                                {% if hasLoadedScore %}
+                                                    {{ fixture.homeScore }} - {{ fixture.awayScore }}
+                                                {% else %}
+                                                    &nbsp;
+                                                {% endif %}
+                                                <small class="d-block text-body-secondary fw-normal mt-1 js-local-datetime kickoff-time" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</small>
+                                            </td>
+                                            <td class="fw-semibold text-end team-cell team-cell-away">
+                                                {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} {{ fixture.awayTeam.code|flag_icon }}
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center py-3 text-body-secondary small">No hay más partidos programados.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold">
+                        Últimos partidos finalizados
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0 group-fixtures-table">
+                                <tbody>
+                                    {% for fixture in latestFinished %}
+                                        {% set kickoffTs = fixture.kickoffAt|date('U') %}
+                                        {% set nowTs = 'now'|date('U') %}
+                                        {% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null %}
+                                        {% set isInProgress = fixture.status == 'scheduled' and (kickoffTs <= nowTs or hasLoadedScore) %}
+                                        {% set isFinished = fixture.status == 'finished' %}
+                                        <tr>
+                                            <td class="fw-semibold team-cell team-cell-home">
+                                                {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
+                                            </td>
+                                            <td class="text-center fw-bold score-cell">
+                                                {% if isFinished %}
+                                                    <small class="d-block mb-1"><span class="badge text-bg-secondary">Finalizado</span></small>
+                                                {% elseif isInProgress %}
+                                                    <small class="d-block mb-1"><span class="badge text-bg-info">En curso</span></small>
+                                                {% endif %}
+                                                {% if hasLoadedScore %}
+                                                    {{ fixture.homeScore }} - {{ fixture.awayScore }}
+                                                {% else %}
+                                                    &nbsp;
+                                                {% endif %}
+                                                <small class="d-block text-body-secondary fw-normal mt-1 js-local-datetime kickoff-time" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</small>
+                                            </td>
+                                            <td class="fw-semibold text-end team-cell team-cell-away">
+                                                {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} {{ fixture.awayTeam.code|flag_icon }}
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center py-3 text-body-secondary small">Ningún partido finalizado todavía.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <h2 class="h5 mb-2">Partidos por grupo</h2>
         <div class="row g-3">
             {% for groupCode, fixtures in fixturesByGroup %}

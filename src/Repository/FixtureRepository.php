@@ -106,7 +106,7 @@ class FixtureRepository extends ServiceEntityRepository
             ->andWhere('f.status = :status')
             ->andWhere('f.kickoffAt <= :now')
             ->setParameter('status', Fixture::STATUS_SCHEDULED)
-            ->setParameter('now', $nowUtc)
+            ->setParameter('now', $nowUtc->format('Y-m-d H:i:s'))
             ->orderBy('f.kickoffAt', 'ASC')
             ->setMaxResults(1)
             ->getQuery()
@@ -140,7 +140,7 @@ class FixtureRepository extends ServiceEntityRepository
             ->andWhere('f.status = :status')
             ->andWhere('f.kickoffAt <= :now')
             ->setParameter('status', Fixture::STATUS_SCHEDULED)
-            ->setParameter('now', $nowUtc)
+            ->setParameter('now', $nowUtc->format('Y-m-d H:i:s'))
             ->orderBy('f.kickoffAt', 'ASC')
             ->getQuery()
             ->getResult();
@@ -163,8 +163,8 @@ class FixtureRepository extends ServiceEntityRepository
             ->andWhere('f.predictionsEmailSentAt IS NULL')
             ->andWhere('f.kickoffAt <= :closingThreshold')
             ->andWhere('f.kickoffAt >= :catchUpSinceUtc')
-            ->setParameter('closingThreshold', $closingThreshold)
-            ->setParameter('catchUpSinceUtc', $catchUpSinceUtc)
+            ->setParameter('closingThreshold', $closingThreshold->format('Y-m-d H:i:s'))
+            ->setParameter('catchUpSinceUtc', $catchUpSinceUtc->format('Y-m-d H:i:s'))
             ->orderBy('f.kickoffAt', 'ASC')
             ->getQuery()
             ->getResult();
@@ -183,11 +183,43 @@ class FixtureRepository extends ServiceEntityRepository
             ->andWhere('f.status = :status')
             ->andWhere('f.kickoffAt > :closingThreshold')
             ->setParameter('status', Fixture::STATUS_SCHEDULED)
-            ->setParameter('closingThreshold', $closingThreshold)
+            ->setParameter('closingThreshold', $closingThreshold->format('Y-m-d H:i:s'))
             ->orderBy('f.kickoffAt', 'ASC')
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * @return list<Fixture>
+     */
+    public function findLatestFinished(int $limit): array
+    {
+        return $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->andWhere('f.status = :status')
+            ->setParameter('status', Fixture::STATUS_FINISHED)
+            ->orderBy('f.kickoffAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return list<Fixture>
+     */
+    public function findNextScheduled(int $limit): array
+    {
+        return $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->andWhere('f.status = :status')
+            ->setParameter('status', Fixture::STATUS_SCHEDULED)
+            ->orderBy('f.kickoffAt', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 }
 
