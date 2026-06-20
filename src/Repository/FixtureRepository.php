@@ -98,6 +98,21 @@ class FixtureRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function findNextNotStartedFixture(\DateTimeImmutable $nowUtc): ?Fixture
+    {
+        return $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->andWhere('f.status = :status')
+            ->andWhere('f.kickoffAt > :now')
+            ->setParameter('status', Fixture::STATUS_SCHEDULED)
+            ->setParameter('now', $nowUtc->format('Y-m-d H:i:s'))
+            ->orderBy('f.kickoffAt', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function findInProgressScheduledFixture(\DateTimeImmutable $nowUtc): ?Fixture
     {
         return $this->createQueryBuilder('f')

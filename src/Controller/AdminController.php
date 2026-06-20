@@ -16,6 +16,7 @@ use App\Repository\TournamentGroupRepository;
 use App\Repository\UserRepository;
 use App\Service\FixturePredictionEmailService;
 use App\Service\SimulationService;
+use App\Service\TestNextFixturePredictionsWhatsAppService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -358,6 +359,41 @@ class AdminController extends AbstractController
         $fixtureRepository->getEntityManager()->flush();
 
         $this->addFlash('success', sprintf('Resumen enviado para %s destinatarios.', $sentCount));
+
+        return $this->redirectToRoute('admin_dashboard');
+    }
+
+    #[Route('/fixtures/test-predictions-whatsapp', name: 'admin_test_next_fixture_predictions_whatsapp', methods: ['POST'])]
+    public function testNextFixturePredictionsWhatsApp(
+        Request $request,
+        TestNextFixturePredictionsWhatsAppService $testNextFixturePredictionsWhatsAppService,
+    ): RedirectResponse {
+        if (!$this->isCsrfTokenValid('admin_test_next_fixture_predictions_whatsapp', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'CSRF inválido.');
+
+            return $this->redirectToRoute('admin_dashboard');
+        }
+
+        $result = $testNextFixturePredictionsWhatsAppService->sendToAdmin();
+
+        if ($result['error'] !== null) {
+            $this->addFlash('error', $result['error']);
+
+            return $this->redirectToRoute('admin_dashboard');
+        }
+
+        $fixtureDescription = $result['fixture'] !== null
+            ? $testNextFixturePredictionsWhatsAppService->describeFixture($result['fixture'])
+            : 'partido desconocido';
+
+        $this->addFlash(
+            'success',
+            sprintf(
+                'WhatsApp de prueba enviado para %s (%d pronósticos).',
+                $fixtureDescription,
+                $result['predictionCount'],
+            )
+        );
 
         return $this->redirectToRoute('admin_dashboard');
     }

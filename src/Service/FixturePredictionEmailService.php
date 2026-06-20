@@ -29,28 +29,8 @@ class FixturePredictionEmailService
             return 0;
         }
 
-        $summaryRows = [];
-        foreach ($predictions as $prediction) {
-            $user = $prediction->getUser();
-            if (!$user instanceof User) {
-                continue;
-            }
-
-            $summaryRows[] = [
-                'name' => $user->getName(),
-                'homeScore' => $prediction->getPredictedHomeScore(),
-                'awayScore' => $prediction->getPredictedAwayScore(),
-            ];
-        }
-
-        $homeTeamName = $this->countryNameResolver->resolveSpanishName(
-            $fixture->getHomeTeam()?->getCode(),
-            $fixture->getHomeTeam()?->getName()
-        );
-        $awayTeamName = $this->countryNameResolver->resolveSpanishName(
-            $fixture->getAwayTeam()?->getCode(),
-            $fixture->getAwayTeam()?->getName()
-        );
+        $summaryRows = $this->buildSummaryRows($predictions);
+        [$homeTeamName, $awayTeamName] = $this->resolveFixtureTeamNames($fixture);
 
         $subject = sprintf('Predicciones publicadas: %s vs %s', $homeTeamName, $awayTeamName);
         $sentCount = 0;
@@ -73,17 +53,87 @@ class FixturePredictionEmailService
             ++$sentCount;
         }
 
-        $whatsappMessage = sprintf("Pronósticos para el partido %s vs %s:\n", $homeTeamName, $awayTeamName);
+        $this->sendFixturePredictionsWhatsApp($fixture, $predictions);
+
+        return $sentCount;
+    }
+
+    /**
+     * @param list<Prediction> $predictions
+     */
+    public function sendFixturePredictionsWhatsApp(Fixture $fixture, array $predictions, string $prefix = ''): bool
+    {
+        $message = $this->buildFixturePredictionsWhatsAppMessage($fixture, $predictions, $prefix);
+        if ($message === null) {
+            return false;
+        }
+
+        return $this->whatsAppService->sendMessage($message);
+    }
+
+    /**
+     * @param list<Prediction> $predictions
+     */
+    public function buildFixturePredictionsWhatsAppMessage(Fixture $fixture, array $predictions, string $prefix = ''): ?string
+    {
+        $summaryRows = $this->buildSummaryRows($predictions);
+        if ($summaryRows === []) {
+            return null;
+        }
+
+        [$homeTeamName, $awayTeamName] = $this->resolveFixtureTeamNames($fixture);
+
+        $message = sprintf("%sPronósticos para el partido %s vs %s:\n", $prefix, $homeTeamName, $awayTeamName);
         foreach ($summaryRows as $row) {
-            $whatsappMessage .= sprintf(
+            $message .= sprintf(
                 "- %s: %d - %d\n",
                 $row['name'],
                 $row['homeScore'],
                 $row['awayScore']
             );
         }
-        $this->whatsAppService->sendMessage(rtrim($whatsappMessage));
 
-        return $sentCount;
+        return rtrim($message);
+    }
+
+    /**
+     * @param list<Prediction> $predictions
+     *
+     * @return list<array{name: string, homeScore: int, awayScore: int}>
+     */
+    private function buildSummaryRows(array $predictions): array
+    {
+        $summaryRows = [];
+        foreach ($predictions as $prediction) {
+            $user = $prediction->getUser();
+            if (!$user instanceof User) {
+                continue;
+            }
+
+            $summaryRows[] = [
+                'name' => $user->getName(),
+                'homeScore' => $prediction->getPredictedHomeScore(),
+                'awayScore' => $prediction->getPredictedAwayScore(),
+            ];
+        }
+
+        return $summaryRows;
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function resolveFixtureTeamNames(Fixture $fixture): array
+    {
+        return [
+            $this->countryNameResolver->resolveSpanishName(
+                $fixture->getHomeTeam()?->getCode(),
+                $fixture->getHomeTeam()?->getName()
+            ),
+            $this->countryNameResolver->resolveSpanishName(
+                $fixture->getAwayTeam()?->getCode(),
+                $fixture->getAwayTeam()?->getName()
+            ),
+        ];
     }
 }

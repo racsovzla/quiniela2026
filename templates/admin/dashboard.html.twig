@@ -22,6 +22,10 @@
                 <button class="btn btn-success btn-sm">Finalizar partido en curso</button>
             </form>
             <button type="button" class="btn btn-warning btn-sm" data-open-predictions="fixture-email-modal">Enviar predicciones por correo</button>
+            <form method="post" action="{{ path('admin_test_next_fixture_predictions_whatsapp') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('admin_test_next_fixture_predictions_whatsapp') }}">
+                <button class="btn btn-outline-success btn-sm" type="submit">Probar WhatsApp (próximo partido)</button>
+            </form>
         </div>
     </div>
 </div>

@@ -89,9 +89,6 @@ class LeaderboardController extends AbstractController
         $remainingCount = $fixtureRepository->count(['status' => Fixture::STATUS_SCHEDULED]);
 
         $latestFinished = $fixtureRepository->findLatestFinished(6);
-        usort($latestFinished, function (\App\Entity\Fixture $a, \App\Entity\Fixture $b) {
-            return $a->getKickoffAt() <=> $b->getKickoffAt();
-        });
 
         return $this->render('leaderboard/index.html.twig', [
             'rows' => $rows,

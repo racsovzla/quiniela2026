@@ -57,6 +57,22 @@ class UserRepository extends ServiceEntityRepository implements UserProviderInte
     /**
      * @return list<User>
      */
+    public function findAdmins(): array
+    {
+        $users = $this->createQueryBuilder('u')
+            ->addOrderBy('u.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return array_values(array_filter(
+            $users,
+            static fn (User $user): bool => in_array('ROLE_ADMIN', $user->getRoles(), true)
+        ));
+    }
+
+    /**
+     * @return list<User>
+     */
     public function findApprovedVerifiedRecipients(): array
     {
         return $this->createQueryBuilder('u')
