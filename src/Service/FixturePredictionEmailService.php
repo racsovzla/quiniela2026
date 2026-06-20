@@ -16,6 +16,7 @@ class FixturePredictionEmailService
         private readonly Address $mailerFromAddress,
         private readonly CountryNameResolver $countryNameResolver,
         private readonly WhatsAppService $whatsAppService,
+        private readonly WhatsAppMessageFormatter $whatsAppMessageFormatter,
     ) {
     }
 
@@ -83,17 +84,13 @@ class FixturePredictionEmailService
 
         [$homeTeamName, $awayTeamName] = $this->resolveFixtureTeamNames($fixture);
 
-        $message = sprintf("%sPronósticos para el partido %s vs %s:\n", $prefix, $homeTeamName, $awayTeamName);
-        foreach ($summaryRows as $row) {
-            $message .= sprintf(
-                "- %s: %d - %d\n",
-                $row['name'],
-                $row['homeScore'],
-                $row['awayScore']
-            );
-        }
-
-        return rtrim($message);
+        return $this->whatsAppMessageFormatter->formatFixturePredictionsClosed(
+            $homeTeamName,
+            $awayTeamName,
+            $fixture->getKickoffAt(),
+            $summaryRows,
+            $prefix,
+        );
     }
 
     /**

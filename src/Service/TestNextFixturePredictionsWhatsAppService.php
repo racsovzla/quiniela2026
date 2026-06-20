@@ -10,7 +10,7 @@ use App\Repository\UserRepository;
 
 class TestNextFixturePredictionsWhatsAppService
 {
-    private const MESSAGE_PREFIX = '[PRUEBA] ';
+    private const MESSAGE_PREFIX = '🧪 [PRUEBA]';
 
     public function __construct(
         private readonly FixtureRepository $fixtureRepository,

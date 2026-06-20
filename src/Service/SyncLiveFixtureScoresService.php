@@ -18,6 +18,7 @@ class SyncLiveFixtureScoresService
         private readonly PredictionRepository $predictionRepository,
         private readonly CountryNameResolver $countryNameResolver,
         private readonly WhatsAppService $whatsAppService,
+        private readonly WhatsAppMessageFormatter $whatsAppMessageFormatter,
     ) {
     }
 
@@ -136,11 +137,10 @@ class SyncLiveFixtureScoresService
                 $nextFixture->getAwayTeam()?->getName()
             );
 
-            $message = sprintf(
-                "¡Atención! El partido siguiente %s vs %s se acerca y los siguientes usuarios aún no han hecho sus pronósticos:\n%s",
+            $message = $this->whatsAppMessageFormatter->formatMissingPredictionsReminder(
                 $homeTeam,
                 $awayTeam,
-                implode("\n", array_map(fn($name) => "- " . $name, $missingUsers))
+                $missingUsers,
             );
 
             $this->whatsAppService->sendMessage($message);

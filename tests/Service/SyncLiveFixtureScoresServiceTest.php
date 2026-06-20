@@ -11,6 +11,7 @@ use App\Repository\UserRepository;
 use App\Repository\PredictionRepository;
 use App\Service\FifaCalendarClient;
 use App\Service\CountryNameResolver;
+use App\Service\WhatsAppMessageFormatter;
 use App\Service\WhatsAppService;
 use App\Service\SyncLiveFixtureScoresService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -240,7 +241,8 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
             $userRepository ?? $this->createMock(UserRepository::class),
             $predictionRepository ?? $this->createMock(PredictionRepository::class),
             $countryNameResolver ?? $this->createMock(CountryNameResolver::class),
-            $whatsAppService ?? $this->createMock(WhatsAppService::class)
+            $whatsAppService ?? $this->createMock(WhatsAppService::class),
+            new WhatsAppMessageFormatter(),
         );
     }
 
@@ -324,7 +326,9 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with(self::callback(function (string $message) {
-                return str_contains($message, 'Pedro') && !str_contains($message, 'Oscar') && str_contains($message, 'ARG vs BRA');
+                return str_contains($message, 'Pedro')
+                    && !str_contains($message, 'Oscar')
+                    && str_contains($message, '*ARG* vs *BRA*');
             }));
 
         $service = $this->createService(

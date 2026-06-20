@@ -8,6 +8,7 @@ use App\Entity\Team;
 use App\Entity\User;
 use App\Service\CountryNameResolver;
 use App\Service\FixturePredictionEmailService;
+use App\Service\WhatsAppMessageFormatter;
 use App\Service\WhatsAppService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Mailer\MailerInterface;
@@ -59,16 +60,19 @@ class FixturePredictionEmailServiceTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with(self::callback(function (string $message) {
-                return str_contains($message, 'Pronósticos para el partido Home Team vs Away Team')
-                    && str_contains($message, '- Oscar: 2 - 1')
-                    && str_contains($message, '- Pedro: 0 - 3');
+                return str_contains($message, '*Home Team* vs *Away Team*')
+                    && str_contains($message, 'Oscar')
+                    && str_contains($message, '*2-1*')
+                    && str_contains($message, 'Pedro')
+                    && str_contains($message, '*0-3*');
             }));
 
         $service = new FixturePredictionEmailService(
             $mailer,
             $mailerFromAddress,
             $countryNameResolver,
-            $whatsAppService
+            $whatsAppService,
+            new WhatsAppMessageFormatter(),
         );
 
         $sentCount = $service->sendFixturePredictionsSummary($fixture, $predictions, $recipients);
