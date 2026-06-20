@@ -1,0 +1,13 @@
+<div class="prediction-modal" id="{{ modalId }}" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="{{ modalId }}-title">
+    <div class="prediction-modal__backdrop" data-close-predictions="{{ modalId }}"></div>
+    <div class="prediction-modal__panel" role="document">
+        <div class="prediction-modal__header d-flex justify-content-between align-items-center gap-2">
+            <h3 class="h5 mb-0" id="{{ modalId }}-title">{{ modalTitle }}</h3>
+            <button type="button" class="btn btn-outline-dark btn-sm" data-close-predictions="{{ modalId }}">Cerrar</button>
+        </div>
+        <div class="prediction-modal__body">
+            <p class="text-body-secondary small mb-3">Aquí solo se muestran predicciones de partidos ya cerrados a edición.</p>
+            {% include 'leaderboard/_fixture_predictions_table.html.twig' %}
+        </div>
+    </div>
+</div>

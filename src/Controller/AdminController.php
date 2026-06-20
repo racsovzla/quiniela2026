@@ -353,12 +353,28 @@ class AdminController extends AbstractController
             return $this->redirectToRoute('admin_dashboard');
         }
 
-        $sentCount = $fixturePredictionEmailService->sendFixturePredictionsSummary($fixture, $predictions, $recipients);
+        $dispatchResult = $fixturePredictionEmailService->sendFixturePredictionsSummary($fixture, $predictions, $recipients);
 
         $fixture->setPredictionsEmailSentAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
         $fixtureRepository->getEntityManager()->flush();
 
-        $this->addFlash('success', sprintf('Resumen enviado para %s destinatarios.', $sentCount));
+        if ($dispatchResult['whatsAppSent']) {
+            $this->addFlash(
+                'success',
+                sprintf(
+                    'Resumen enviado para %s destinatarios y notificación WhatsApp.',
+                    $dispatchResult['emailsSent'],
+                ),
+            );
+        } else {
+            $this->addFlash(
+                'warning',
+                sprintf(
+                    'Correos enviados a %s destinatarios, pero WhatsApp no se pudo enviar. Revisa CALLMEBOT_PHONE y CALLMEBOT_APIKEY.',
+                    $dispatchResult['emailsSent'],
+                ),
+            );
+        }
 
         return $this->redirectToRoute('admin_dashboard');
     }

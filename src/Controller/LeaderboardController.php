@@ -44,21 +44,28 @@ class LeaderboardController extends AbstractController
             return $tsA <=> $tsB;
         });
 
-        $predictionsByGroup = [];
+        $closedPredictionsByFixture = [];
         foreach ($predictionRepository->findClosedWithFixtureAndUserOrderedForGroups($nowUtc) as $prediction) {
             $fixture = $prediction->getFixture();
             if (!$fixture) {
                 continue;
             }
-            $groupCode = $fixture->getGroup()?->getCode() ?? '-';
+
             $fixtureId = $fixture->getId();
-            if (!isset($predictionsByGroup[$groupCode][$fixtureId])) {
-                $predictionsByGroup[$groupCode][$fixtureId] = [
+            if (!isset($closedPredictionsByFixture[$fixtureId])) {
+                $closedPredictionsByFixture[$fixtureId] = [
                     'fixture' => $fixture,
                     'predictions' => [],
                 ];
             }
-            $predictionsByGroup[$groupCode][$fixtureId]['predictions'][] = $prediction;
+
+            $closedPredictionsByFixture[$fixtureId]['predictions'][] = $prediction;
+        }
+
+        $predictionsByGroup = [];
+        foreach ($closedPredictionsByFixture as $fixtureId => $fixtureData) {
+            $groupCode = $fixtureData['fixture']->getGroup()?->getCode() ?? '-';
+            $predictionsByGroup[$groupCode][$fixtureId] = $fixtureData;
         }
 
         // Sort fixtures under each group code:
@@ -89,6 +96,7 @@ class LeaderboardController extends AbstractController
         $remainingCount = $fixtureRepository->count(['status' => Fixture::STATUS_SCHEDULED]);
 
         $latestFinished = $fixtureRepository->findLatestFinished(6);
+        $nextScheduled = $fixtureRepository->findNextScheduled(6);
 
         return $this->render('leaderboard/index.html.twig', [
             'rows' => $rows,
@@ -97,11 +105,33 @@ class LeaderboardController extends AbstractController
             'livePointsByUser' => $scoringService->livePointsByUser($nowUtc),
             'nextFixture' => $fixtureRepository->findNextEditableFixture($nowUtc),
             'latestFinished' => $latestFinished,
-            'nextScheduled' => $fixtureRepository->findNextScheduled(6),
+            'nextScheduled' => $nextScheduled,
+            'predictionsByNextScheduled' => $this->predictionsForListedFixtures($nextScheduled, $closedPredictionsByFixture),
+            'predictionsByLatestFinished' => $this->predictionsForListedFixtures($latestFinished, $closedPredictionsByFixture),
             'fixturesByGroup' => $fixturesByGroup,
             'predictionsByGroup' => $predictionsByGroup,
             'scoringService' => $scoringService,
         ]);
+    }
+
+    /**
+     * @param list<Fixture> $fixtures
+     * @param array<int, array{fixture: Fixture, predictions: list<\App\Entity\Prediction>}> $closedPredictionsByFixture
+     *
+     * @return array<int, array{fixture: Fixture, predictions: list<\App\Entity\Prediction>}>
+     */
+    private function predictionsForListedFixtures(array $fixtures, array $closedPredictionsByFixture): array
+    {
+        $predictionsByFixture = [];
+
+        foreach ($fixtures as $fixture) {
+            $fixtureId = $fixture->getId();
+            if ($fixtureId !== null && isset($closedPredictionsByFixture[$fixtureId])) {
+                $predictionsByFixture[$fixtureId] = $closedPredictionsByFixture[$fixtureId];
+            }
+        }
+
+        return $predictionsByFixture;
     }
 
     #[Route('/leaderboard/user/{id}/audit', name: 'app_leaderboard_user_audit', methods: ['GET'])]

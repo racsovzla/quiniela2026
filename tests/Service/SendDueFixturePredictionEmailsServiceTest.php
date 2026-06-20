@@ -86,6 +86,44 @@ class SendDueFixturePredictionEmailsServiceTest extends TestCase
         self::assertNull($fixture->getPredictionsEmailSentAt());
     }
 
+    public function testDispatchDueEmailsSendsSummaryIncludingWhatsApp(): void
+    {
+        $fixture = $this->createFixture(new \DateTimeImmutable('2026-06-11 19:00:00', new \DateTimeZone('UTC')));
+
+        $fixtureRepository = $this->createMock(FixtureRepository::class);
+        $fixtureRepository->method('findDueForPredictionEmail')->willReturn([$fixture]);
+
+        $predictionRepository = $this->createMock(PredictionRepository::class);
+        $predictionRepository->method('findByFixtureWithUser')->willReturn([new \App\Entity\Prediction()]);
+
+        $userRepository = $this->createMock(UserRepository::class);
+        $userRepository->method('findApprovedVerifiedRecipients')->willReturn([new \App\Entity\User()]);
+
+        $emailService = $this->createMock(FixturePredictionEmailService::class);
+        $emailService
+            ->expects(self::once())
+            ->method('sendFixturePredictionsSummary')
+            ->willReturn(['emailsSent' => 1, 'whatsAppSent' => true]);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('persist')->with($fixture);
+        $entityManager->expects(self::once())->method('flush');
+
+        $service = new SendDueFixturePredictionEmailsService(
+            $fixtureRepository,
+            $predictionRepository,
+            $userRepository,
+            $emailService,
+            $entityManager,
+        );
+
+        $stats = $service->dispatchDueEmails(new \DateTimeImmutable('2026-06-11 18:55:00', new \DateTimeZone('UTC')));
+
+        self::assertSame(1, $stats['sent']);
+        self::assertSame(1, $stats['recipientCount']);
+        self::assertNotNull($fixture->getPredictionsEmailSentAt());
+    }
+
     private function createFixture(\DateTimeImmutable $kickoffAt): Fixture
     {
         $homeTeam = (new Team())->setName('Home')->setCode('HOM');

@@ -1,0 +1,80 @@
+<div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+        <tbody>
+            {% for fixtureId, fixtureData in predictionsByFixture %}
+                {% set fixture = fixtureData.fixture %}
+                {% set predictions = fixtureData.predictions %}
+
+                <tr>
+                    <td colspan="3" class="py-2 px-3" style="background-color: var(--wc-bg-soft); border-bottom: 1px solid var(--wc-line);">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <span class="fw-bold text-white">
+                                {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
+                                <span style="color: var(--wc-muted); margin: 0 4px;">vs</span>
+                                {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}
+                            </span>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="small js-local-datetime" style="color: var(--wc-muted);" data-utc="{{ fixture.kickoffAt|date('c') }}">
+                                    {{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC
+                                </span>
+
+                                {% set kickoffTs = fixture.kickoffAt|date('U') %}
+                                {% set nowTs = 'now'|date('U') %}
+                                {% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null %}
+                                {% set isInProgress = fixture.status == 'scheduled' and (kickoffTs <= nowTs or hasLoadedScore) %}
+                                {% set isFinished = fixture.status == 'finished' %}
+
+                                {% if isFinished %}
+                                    <span class="badge text-bg-secondary">Finalizado: {{ fixture.homeScore }} - {{ fixture.awayScore }}</span>
+                                {% elseif isInProgress %}
+                                    <span class="badge text-bg-info">En curso: {{ fixture.homeScore }} - {{ fixture.awayScore }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-dark border border-secondary text-secondary">Programado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                {% if predictions is not empty %}
+                    <tr class="small" style="font-size: 0.8rem; border-bottom: 1px solid rgba(156, 179, 197, 0.15);">
+                        <th class="ps-3 py-2 border-bottom-0" style="color: var(--wc-muted);">Usuario</th>
+                        <th class="py-2 border-bottom-0" style="color: var(--wc-muted);">Predicción</th>
+                        <th class="pe-3 py-2 text-end border-bottom-0" style="color: var(--wc-muted);">Puntos</th>
+                    </tr>
+
+                    {% for prediction in predictions %}
+                        {% set points = scoringService.calculatePoints(prediction) %}
+                        <tr style="border-bottom: 1px solid rgba(156, 179, 197, 0.08);">
+                            <td class="ps-3 py-2" style="color: var(--wc-text);">{{ prediction.user.name }}</td>
+                            <td class="py-2"><strong style="color: var(--wc-accent);">{{ prediction.predictedHomeScore }} - {{ prediction.predictedAwayScore }}</strong></td>
+                            <td class="pe-3 py-2 text-end">
+                                {% if fixture.status == 'finished' %}
+                                    {% if points == 3 %}
+                                        <span class="badge text-bg-success fw-semibold">+3 pts</span>
+                                    {% elseif points == 1 %}
+                                        <span class="badge text-bg-primary fw-semibold">+1 pt</span>
+                                    {% else %}
+                                        <span class="badge text-bg-dark border border-secondary text-muted fw-normal">0 pts</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span style="color: var(--wc-muted); font-size: 0.9rem;">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="border-bottom-0">
+                        <td colspan="3" class="ps-3 text-muted small py-2">Sin predicciones registradas para este partido.</td>
+                    </tr>
+                {% endif %}
+                <tr style="height: 12px; border: none;"><td colspan="3" style="border: none; padding: 0;"></td></tr>
+            {% else %}
+                <tr>
+                    <td class="text-center py-4" style="color: var(--wc-muted);">{{ emptyMessage|default('No hay predicciones de partidos cerrados.') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

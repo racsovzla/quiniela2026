@@ -60,13 +60,13 @@ class SendDueFixturePredictionEmailsService
             }
 
             if (!$dryRun) {
-                $sentCount = $this->fixturePredictionEmailService->sendFixturePredictionsSummary(
+                $dispatchResult = $this->fixturePredictionEmailService->sendFixturePredictionsSummary(
                     $fixture,
                     $predictions,
                     $recipients,
                 );
                 $this->markAsSent($fixture, $nowUtc);
-                $stats['recipientCount'] += $sentCount;
+                $stats['recipientCount'] += $dispatchResult['emailsSent'];
             }
 
             ++$stats['sent'];

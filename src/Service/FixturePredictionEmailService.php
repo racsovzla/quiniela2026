@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Fixture;
 use App\Entity\Prediction;
 use App\Entity\User;
+use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -17,17 +18,20 @@ class FixturePredictionEmailService
         private readonly CountryNameResolver $countryNameResolver,
         private readonly WhatsAppService $whatsAppService,
         private readonly WhatsAppMessageFormatter $whatsAppMessageFormatter,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
      * @param list<Prediction> $predictions
      * @param list<User> $recipients
+     *
+     * @return array{emailsSent: int, whatsAppSent: bool}
      */
-    public function sendFixturePredictionsSummary(Fixture $fixture, array $predictions, array $recipients): int
+    public function sendFixturePredictionsSummary(Fixture $fixture, array $predictions, array $recipients): array
     {
         if ($recipients === []) {
-            return 0;
+            return ['emailsSent' => 0, 'whatsAppSent' => false];
         }
 
         $summaryRows = $this->buildSummaryRows($predictions);
@@ -35,28 +39,42 @@ class FixturePredictionEmailService
 
         $subject = sprintf('Predicciones publicadas: %s vs %s', $homeTeamName, $awayTeamName);
         $sentCount = 0;
+        $whatsAppSent = false;
 
-        foreach ($recipients as $recipient) {
-            $email = (new TemplatedEmail())
-                ->from($this->mailerFromAddress)
-                ->to(new Address($recipient->getEmail(), $recipient->getName()))
-                ->subject($subject)
-                ->htmlTemplate('emails/fixture_predictions_summary.html.twig')
-                ->context([
-                    'recipient' => $recipient,
-                    'fixture' => $fixture,
-                    'homeTeamName' => $homeTeamName,
-                    'awayTeamName' => $awayTeamName,
-                    'summaryRows' => $summaryRows,
-                ]);
+        try {
+            foreach ($recipients as $recipient) {
+                $email = (new TemplatedEmail())
+                    ->from($this->mailerFromAddress)
+                    ->to(new Address($recipient->getEmail(), $recipient->getName()))
+                    ->subject($subject)
+                    ->htmlTemplate('emails/fixture_predictions_summary.html.twig')
+                    ->context([
+                        'recipient' => $recipient,
+                        'fixture' => $fixture,
+                        'homeTeamName' => $homeTeamName,
+                        'awayTeamName' => $awayTeamName,
+                        'summaryRows' => $summaryRows,
+                    ]);
 
-            $this->mailer->send($email);
-            ++$sentCount;
+                $this->mailer->send($email);
+                ++$sentCount;
+            }
+        } finally {
+            if ($sentCount > 0) {
+                $whatsAppSent = $this->sendFixturePredictionsWhatsApp($fixture, $predictions);
+                if (!$whatsAppSent) {
+                    $this->logger->warning('Fixture prediction emails sent but WhatsApp notification failed.', [
+                        'fixtureId' => $fixture->getId(),
+                        'emailsSent' => $sentCount,
+                    ]);
+                }
+            }
         }
 
-        $this->sendFixturePredictionsWhatsApp($fixture, $predictions);
-
-        return $sentCount;
+        return [
+            'emailsSent' => $sentCount,
+            'whatsAppSent' => $whatsAppSent,
+        ];
     }
 
     /**
