@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Icono de "Quiniela 2026" (arte original, sin marcas FIFA).
+  Estética inspirada en el Mundial 26: bloques de color diagonales
+  (morado / rojo / verde / lima) con un "26" tipográfico potente.
+  Contenido dentro de la zona segura central (~80%) para maskable.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.30"/>
+    </filter>
+  </defs>
+
+  <!-- Base -->
+  <rect width="512" height="512" fill="#E4002B"/>
+
+  <!-- Bloques de color en diagonal -->
+  <g transform="skewX(-14)">
+    <rect x="-120" y="-160" width="320" height="900" fill="#6A19E6"/>
+    <rect x="200"  y="-160" width="160" height="900" fill="#E4002B"/>
+    <rect x="360"  y="-160" width="64"  height="900" fill="#8E1326"/>
+    <rect x="424"  y="-160" width="110" height="900" fill="#00A94F"/>
+    <rect x="534"  y="-160" width="260" height="900" fill="#C6F000"/>
+  </g>
+
+  <!-- Hero "26" -->
+  <text x="256" y="312" text-anchor="middle" filter="url(#soft)"
+        font-family="'Arial Black', Helvetica, Arial, sans-serif" font-weight="900"
+        font-size="250" fill="#ffffff" letter-spacing="-6">26</text>
+
+  <!-- Wordmark -->
+  <text x="256" y="402" text-anchor="middle"
+        font-family="'Arial Black', Helvetica, Arial, sans-serif" font-weight="900"
+        font-size="44" fill="#ffffff" letter-spacing="3">QUINIELA</text>
+</svg>
