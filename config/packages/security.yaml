@@ -25,6 +25,11 @@ security:
                 default_target_path: /
                 always_use_default_target_path: true
 
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 2592000   # 30 días
+                path: /
+
             login_throttling:
                 max_attempts: 5
                 interval: '15 minutes'

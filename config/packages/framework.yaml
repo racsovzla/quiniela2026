@@ -8,7 +8,8 @@ framework:
         log: true
 
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    session:
+        gc_maxlifetime: 604800   # 7 días de inactividad antes de recolectar la sesión
 
     #esi: true
     #fragments: true

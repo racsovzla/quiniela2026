@@ -24,6 +24,10 @@
                         <label class="form-label">Contraseña</label>
                         <input type="password" name="_password" class="form-control" required>
                     </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="_remember_me" name="_remember_me" checked>
+                        <label class="form-check-label" for="_remember_me">Mantener sesión iniciada</label>
+                    </div>
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
                     <input type="hidden" name="_target_path" value="/">
                     <button class="btn btn-primary w-100">Entrar</button>
