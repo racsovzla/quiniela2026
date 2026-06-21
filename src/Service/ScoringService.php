@@ -101,14 +101,20 @@ class ScoringService
             return 0;
         }
 
+        return $this->pointsForScores($predHome, $predAway, $realHome, $realAway);
+    }
+
+    /**
+     * Pure 3/1/0 rule for a prediction vs a score, without payment/status guards.
+     * Useful to display potential (provisional/final) points on the home page.
+     */
+    public function pointsForScores(int $predHome, int $predAway, int $realHome, int $realAway): int
+    {
         if ($predHome === $realHome && $predAway === $realAway) {
             return 3;
         }
 
-        $predResult = $predHome <=> $predAway;
-        $realResult = $realHome <=> $realAway;
-
-        return $predResult === $realResult ? 1 : 0;
+        return ($predHome <=> $predAway) === ($realHome <=> $realAway) ? 1 : 0;
     }
 
     /**

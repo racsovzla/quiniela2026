@@ -21,6 +21,19 @@
     {% endif %}
 </div>
 
+{% if app.user %}
+    <section class="mb-4">
+        <turbo-frame id="today-matches"
+            data-controller="today-matches"
+            data-today-matches-url-value="{{ path('app_home_today_matches') }}"
+            data-today-matches-live-url-value="{{ path('app_home_today_matches_live') }}"
+            data-today-matches-interval-value="60">
+            <div class="text-body-secondary py-4 text-center">
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Cargando partidos…
+            </div>
+        </turbo-frame>
+    </section>
+{% else %}
 <div class="row g-4">
     <div class="col-lg-4">
         <div class="card shadow-sm h-100">
@@ -47,4 +60,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

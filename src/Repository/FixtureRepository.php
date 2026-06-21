@@ -222,6 +222,26 @@ class FixtureRepository extends ServiceEntityRepository
     }
 
     /**
+     * Fixtures whose kickoff falls within the given UTC range, ordered by kickoff.
+     *
+     * @return list<Fixture>
+     */
+    public function findBetween(\DateTimeImmutable $fromUtc, \DateTimeImmutable $toUtc): array
+    {
+        return $this->createQueryBuilder('f')
+            ->leftJoin('f.homeTeam', 'ht')->addSelect('ht')
+            ->leftJoin('f.awayTeam', 'at')->addSelect('at')
+            ->leftJoin('f.group', 'g')->addSelect('g')
+            ->andWhere('f.kickoffAt >= :fromUtc')
+            ->andWhere('f.kickoffAt <= :toUtc')
+            ->setParameter('fromUtc', $fromUtc->format('Y-m-d H:i:s'))
+            ->setParameter('toUtc', $toUtc->format('Y-m-d H:i:s'))
+            ->orderBy('f.kickoffAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return list<Fixture>
      */
     public function findNextScheduled(int $limit): array

@@ -42,6 +42,10 @@
                     }
 
                     document.addEventListener('turbo:load', renderLocalDates);
+                    // Los Turbo Frames con carga diferida (p. ej. "partidos de hoy" en el
+                    // home) disparan turbo:frame-load, no turbo:load. Sin esto, las fechas
+                    // inyectadas en el frame se quedarían en UTC.
+                    document.addEventListener('turbo:frame-load', renderLocalDates);
 
                     // Toggle del menú hamburguesa con soporte para clics fuera
                     document.addEventListener('click', (e) => {
@@ -85,6 +89,7 @@
                 <div class="collapse navbar-collapse" id="navbarMenu">
                     <div class="navbar-nav ms-auto">
                         {% if app.user %}
+                            <a class="nav-link" href="{{ path('app_home') }}">Hoy</a>
                             <a class="nav-link" href="{{ path('app_predictions') }}">Predicciones</a>
                             <a class="nav-link" href="{{ path('app_leaderboard') }}">Tabla de posiciones</a>
                             <a class="nav-link" href="{{ path('app_rules') }}">Reglas</a>

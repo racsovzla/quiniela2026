@@ -1,0 +1,54 @@
+{% set fixture = v.fixture %}
+{% set p = v.prediction %}
+{% set canEditFixture = v.canEdit and canParticipate %}
+<div class="col-12 col-md-6 col-xl-4">
+    <div class="card shadow-sm h-100" data-fixture-id="{{ v.id }}">
+        <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-uppercase small fw-semibold text-body-secondary">Grupo {{ v.groupCode }}</span>
+                <span class="badge {{ v.statusClass }}" data-role="status-badge">{{ v.statusLabel }}</span>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                <span class="fw-semibold text-truncate">{{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}</span>
+                <span class="px-2 text-nowrap fw-bold fs-5" data-role="scoreboard">{{ v.scoreboardText ?? 'vs' }}</span>
+                <span class="fw-semibold text-truncate text-end">{{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</span>
+            </div>
+
+            <div class="small text-body-secondary mb-3">
+                <span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span>
+            </div>
+
+            {% if v.state == 'open' and canEditFixture %}
+                <form class="d-flex align-items-center gap-2 prediction-form" data-turbo="false" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('save_prediction_' ~ fixture.id) }}">
+                    <input type="number" min="0" inputmode="numeric" name="home" class="form-control prediction-score-input" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0">
+                    <span class="prediction-form-separator">-</span>
+                    <input type="number" min="0" inputmode="numeric" name="away" class="form-control prediction-score-input" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0">
+                    <button class="btn btn-sm prediction-form-submit {{ p ? 'btn-outline-primary' : 'btn-primary' }}">{{ p ? 'Editar' : 'Guardar' }}</button>
+                    <span class="prediction-feedback" aria-live="polite"></span>
+                </form>
+                <small class="d-block text-body-secondary mt-2 js-deadline-countdown" data-deadline="{{ v.deadlineIso }}"></small>
+            {% else %}
+                <div class="small">
+                    <span class="text-body-secondary">Tu predicción:</span>
+                    {% if p %}
+                        <span class="fw-semibold">{{ p.predictedHomeScore }} - {{ p.predictedAwayScore }}</span>
+                    {% else %}
+                        <span class="text-warning fw-semibold">sin cargar</span>
+                    {% endif %}
+                    {% if v.state == 'closed' and not canParticipate %}
+                        <span class="text-body-secondary">· verifica tu correo para predecir</span>
+                    {% elseif v.state == 'closed' %}
+                        <span class="text-body-secondary">· ventana cerrada</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="mt-2 {{ v.pointsClass }}" data-role="points">{{ v.pointsText }}</div>
+            {% if v.countsNote %}
+                <div class="small text-body-secondary mt-1">{{ v.countsNote }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>

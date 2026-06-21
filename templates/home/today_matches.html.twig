@@ -1,0 +1,44 @@
+<turbo-frame id="today-matches">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h2 class="h4 mb-0">{{ isFallback ? 'Próximos partidos' : 'Partidos de hoy' }}</h2>
+            {% if not isFallback and jornadaDate is defined %}
+                <small class="text-body-secondary">Jornada del {{ jornadaDate|date('d/m/Y', false) }}</small>
+            {% endif %}
+        </div>
+        {% if not canParticipate %}
+            <span class="badge text-bg-warning">Verifica tu correo para predecir</span>
+        {% elseif paymentValidatedAt is null %}
+            <span class="badge text-bg-info">Pago pendiente: tus puntos contarán al validarlo</span>
+        {% endif %}
+    </div>
+
+    {% if isFallback %}
+        <p class="text-body-secondary mb-3">No hay partidos hoy. Te mostramos los próximos para que vayas cargando tus predicciones.</p>
+    {% endif %}
+
+    {% if views is empty %}
+        <div class="alert alert-light border text-center mb-0">No hay partidos próximos cargados aún.</div>
+    {% else %}
+        {% set hasOpenForm = false %}
+        {% for v in views %}
+            {% if v.state == 'open' %}{% set hasOpenForm = true %}{% endif %}
+        {% endfor %}
+
+        {% if canParticipate and hasOpenForm %}
+            <div class="d-flex justify-content-end align-items-center gap-2 mb-1">
+                <span id="save-all-feedback" class="text-success fw-semibold" aria-live="polite"></span>
+                <button id="btn-save-all" class="btn btn-success btn-sm">Guardar todo</button>
+            </div>
+            <div class="text-end mb-3">
+                <small class="text-body-secondary">Se envían solo los partidos con ambos goles cargados y la ventana abierta.</small>
+            </div>
+        {% endif %}
+
+        <div class="row g-3">
+            {% for v in views %}
+                {% include 'home/_match_card.html.twig' with { v: v, canParticipate: canParticipate } %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</turbo-frame>
