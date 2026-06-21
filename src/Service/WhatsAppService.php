@@ -32,15 +32,40 @@ class WhatsAppService
             ]);
 
             $statusCode = $response->getStatusCode();
-            if ($statusCode >= 200 && $statusCode < 300) {
+            $body = $response->getContent(false);
+
+            if ($statusCode >= 200 && $statusCode < 300 && $this->isQueuedResponse($body)) {
                 return true;
             }
 
-            $this->logger->error(sprintf('WhatsAppService: CallMeBot returned status code %d', $statusCode));
+            $this->logger->error('WhatsAppService: CallMeBot rejected the message.', [
+                'statusCode' => $statusCode,
+                'response' => mb_substr(strip_tags($body), 0, 500),
+            ]);
         } catch (\Throwable $exception) {
             $this->logger->error(sprintf('WhatsAppService: Failed to send message: %s', $exception->getMessage()));
         }
 
         return false;
+    }
+
+    private function isQueuedResponse(string $body): bool
+    {
+        $normalized = strtolower(strip_tags($body));
+
+        if (str_contains($normalized, 'message queued')) {
+            return true;
+        }
+
+        if (
+            str_contains($normalized, 'invalid apikey')
+            || str_contains($normalized, 'invalid phone')
+            || str_contains($normalized, 'not allowed')
+            || str_contains($normalized, 'error')
+        ) {
+            return false;
+        }
+
+        return $normalized !== '';
     }
 }

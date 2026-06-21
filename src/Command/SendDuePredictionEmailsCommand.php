@@ -46,6 +46,13 @@ class SendDuePredictionEmailsCommand extends Command
             $stats['recipientCount'],
         ));
 
+        if (!$dryRun && ($stats['whatsAppFailed'] ?? 0) > 0) {
+            $io->warning(sprintf(
+                'WhatsApp no se pudo enviar para %d partido(s). Revisa CALLMEBOT_PHONE y CALLMEBOT_APIKEY.',
+                $stats['whatsAppFailed'],
+            ));
+        }
+
         return Command::SUCCESS;
     }
 }

@@ -229,30 +229,40 @@ Checklist rapido post-deploy:
 6. Abrir sitio por `https://...` y confirmar que `http://...` redirige a HTTPS.
 7. Verificar registro, llegada de correo y login.
 
-## Deploy en Render (costo 0)
+## Deploy en Hugging Face Spaces
 
-Este repo ya incluye `Dockerfile`, `.dockerignore` y `render.yaml` para despliegue en Render Free.
+La app corre como **Docker Space** (`sdk: docker`, puerto `7860`). El repo incluye `Dockerfile` y `.dockerignore`.
 
-### Importante para plan gratis
+### Sync automatico
 
-- Render Free Postgres expira a los 30 dias. Si necesitas 50-60 dias, usa Postgres externo free (por ejemplo Neon/Supabase).
-- Render Free bloquea puertos SMTP 25/465/587. Usa un proveedor SMTP en puerto permitido (por ejemplo 2525).
-- Render Free no incluye worker separado gratis. En `prod`, este proyecto enruta correo/notificaciones en modo `sync`.
+Cada push a `master` en GitHub dispara `.github/workflows/huggingface.yml`, que sincroniza el codigo al Space `racsovzla/quiniela2026`.
 
-### Pasos
+Requisito: secret `HF_TOKEN` en GitHub con permiso de escritura al Space.
 
-1. Sube el repo a GitHub.
-2. En Render crea un Web Service desde el repo.
-3. Usa el blueprint (`render.yaml`) o deja Render detectar `Dockerfile`.
-4. Define variables de entorno:
-  - `APP_ENV=prod`
-  - `APP_DEBUG=0`
-  - `APP_SECRET` (random largo)
-  - `DATABASE_URL` (Postgres)
-  - `MAILER_DSN` (SMTP por puerto permitido, ej. 2525)
-  - `MAILER_FROM_EMAIL`, `MAILER_FROM_NAME`
-5. Despliega.
-6. Abre shell/console y ejecuta:
+### Variables de entorno en el Space
+
+Define en **Settings → Variables and secrets** del Space (ver tambien `deploy/prod.env.example`):
+
+- `APP_ENV=prod`
+- `APP_DEBUG=0`
+- `APP_SECRET` (random largo)
+- `DATABASE_URL` (Postgres externo, ej. Neon/Supabase)
+- `MAILER_DSN`, `MAILER_FROM_EMAIL`, `MAILER_FROM_NAME`
+- `CALLMEBOT_PHONE`, `CALLMEBOT_APIKEY` (WhatsApp desde el panel admin)
+- `MESSENGER_TRANSPORT_DSN=sync://`
+
+Estas variables alimentan la app web (incluido el boton **Probar WhatsApp** en `/admin`).
+
+### Tareas programadas (GitHub Actions)
+
+Los cron jobs no corren dentro del Space; se ejecutan via GitHub Actions + cron-job.org:
+
+- `send-prediction-emails.yml` — correos y WhatsApp 5 min antes de cada partido
+- `sync-live-fixture-scores.yml` — sincroniza marcadores en vivo
+
+Los mismos secrets deben existir en **GitHub** (repo → Settings → Secrets), incluyendo `CALLMEBOT_PHONE` y `CALLMEBOT_APIKEY`, y el workflow correspondiente debe estar en `master`.
+
+### Setup inicial (consola del Space)
 
 ```bash
 php bin/console doctrine:migrations:migrate --no-interaction --env=prod
@@ -267,7 +277,8 @@ php bin/console app:create-admin "Admin" "admin@tu-dominio.com" "PasswordSegura2
 1. Registro por correo completo.
 2. Crear y bloquear predicciones segun ventana de tiempo.
 3. Leaderboard responde.
-4. Prueba cold start (15+ min inactivo) para validar UX real en free tier.
+4. Boton **Probar WhatsApp** en admin llega al telefono.
+5. Tras el proximo partido, revisar log de GitHub Actions para confirmar envio de correos/WhatsApp.
 
 ## Siguiente iteracion recomendada
 

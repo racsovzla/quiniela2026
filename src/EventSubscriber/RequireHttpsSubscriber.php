@@ -30,7 +30,7 @@ class RequireHttpsSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // On managed platforms (OpenChoreo, Render, etc.), TLS usually terminates
+        // On managed platforms (Hugging Face Spaces, etc.), TLS usually terminates
         // at the edge and proxy headers may not map 1:1 to the public scheme.
         // If a forwarded proto header exists, skip app-level HTTPS redirects.
         if ($hasForwardedProto) {

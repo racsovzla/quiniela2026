@@ -22,7 +22,7 @@ class SendDueFixturePredictionEmailsService
     }
 
     /**
-     * @return array{processed: int, sent: int, skipped: int, recipientCount: int}
+     * @return array{processed: int, sent: int, skipped: int, recipientCount: int, whatsAppFailed: int}
      */
     public function dispatchDueEmails(?\DateTimeImmutable $nowUtc = null, bool $dryRun = false): array
     {
@@ -36,6 +36,7 @@ class SendDueFixturePredictionEmailsService
             'sent' => 0,
             'skipped' => 0,
             'recipientCount' => 0,
+            'whatsAppFailed' => 0,
         ];
 
         foreach ($fixtures as $fixture) {
@@ -67,6 +68,9 @@ class SendDueFixturePredictionEmailsService
                 );
                 $this->markAsSent($fixture, $nowUtc);
                 $stats['recipientCount'] += $dispatchResult['emailsSent'];
+                if (!$dispatchResult['whatsAppSent']) {
+                    ++$stats['whatsAppFailed'];
+                }
             }
 
             ++$stats['sent'];
