@@ -1,0 +1,17 @@
+{% set showPenaltiesInitially = fixture.knockout and p and p.predictedHomeScore == p.predictedAwayScore %}
+<form class="d-flex flex-wrap align-items-center gap-2 prediction-form" data-turbo="false" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}"{% if fixture.knockout %} data-knockout="1"{% endif %}>
+    <input type="hidden" name="_token" value="{{ csrf_token('save_prediction_' ~ fixture.id) }}">
+    <input type="number" min="0" inputmode="numeric" name="home" class="form-control prediction-score-input" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
+    <span class="prediction-form-separator">-</span>
+    <input type="number" min="0" inputmode="numeric" name="away" class="form-control prediction-score-input" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
+    <div class="penalty-inputs d-flex align-items-center gap-2{% if not showPenaltiesInitially %} d-none{% endif %}">
+        <span class="small text-body-secondary text-nowrap">Penales:</span>
+        <input type="number" min="0" inputmode="numeric" name="penalty_home" class="form-control prediction-score-input prediction-penalty-input" value="{{ p and p.predictedPenaltyHomeScore is not null ? p.predictedPenaltyHomeScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
+        <span class="prediction-form-separator">-</span>
+        <input type="number" min="0" inputmode="numeric" name="penalty_away" class="form-control prediction-score-input prediction-penalty-input" value="{{ p and p.predictedPenaltyAwayScore is not null ? p.predictedPenaltyAwayScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
+    </div>
+    {% if showSubmitButton|default(true) and canEditFixture|default(true) %}
+        <button class="btn btn-sm prediction-form-submit {{ p ? 'btn-outline-primary' : 'btn-primary' }}" {{ formDisabled ? 'disabled' : '' }}>{{ p ? 'Editar' : 'Guardar' }}</button>
+    {% endif %}
+    <span class="prediction-feedback pt-2" aria-live="polite"></span>
+</form>

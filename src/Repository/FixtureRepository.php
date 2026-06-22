@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Fixture;
+use App\Entity\Team;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -255,6 +256,20 @@ class FixtureRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+    }
+
+    public function findOneByFifaMatchId(string $fifaMatchId): ?Fixture
+    {
+        return $this->findOneBy(['fifaMatchId' => $fifaMatchId]);
+    }
+
+    public function findOneByTeamsAndStage(Team $homeTeam, Team $awayTeam, string $stage): ?Fixture
+    {
+        return $this->findOneBy([
+            'homeTeam' => $homeTeam,
+            'awayTeam' => $awayTeam,
+            'stage' => $stage,
+        ]);
     }
 }
 

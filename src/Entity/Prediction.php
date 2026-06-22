@@ -36,6 +36,14 @@ class Prediction
     #[Assert\GreaterThanOrEqual(0)]
     private int $predictedAwayScore;
 
+    #[ORM\Column(nullable: true)]
+    #[Assert\GreaterThanOrEqual(0)]
+    private ?int $predictedPenaltyHomeScore = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\GreaterThanOrEqual(0)]
+    private ?int $predictedPenaltyAwayScore = null;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -107,6 +115,46 @@ class Prediction
         $this->predictedAwayScore = $predictedAwayScore;
 
         return $this;
+    }
+
+    public function getPredictedPenaltyHomeScore(): ?int
+    {
+        return $this->predictedPenaltyHomeScore;
+    }
+
+    public function setPredictedPenaltyHomeScore(?int $predictedPenaltyHomeScore): static
+    {
+        $this->predictedPenaltyHomeScore = $predictedPenaltyHomeScore;
+
+        return $this;
+    }
+
+    public function getPredictedPenaltyAwayScore(): ?int
+    {
+        return $this->predictedPenaltyAwayScore;
+    }
+
+    public function setPredictedPenaltyAwayScore(?int $predictedPenaltyAwayScore): static
+    {
+        $this->predictedPenaltyAwayScore = $predictedPenaltyAwayScore;
+
+        return $this;
+    }
+
+    public function hasPenaltyPrediction(): bool
+    {
+        return $this->predictedPenaltyHomeScore !== null && $this->predictedPenaltyAwayScore !== null;
+    }
+
+    public function isCompleteForFixture(): bool
+    {
+        $fixture = $this->getFixture();
+        if ($fixture?->isKnockout() && $this->predictedHomeScore === $this->predictedAwayScore) {
+            return $this->hasPenaltyPrediction()
+                && $this->predictedPenaltyHomeScore !== $this->predictedPenaltyAwayScore;
+        }
+
+        return true;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

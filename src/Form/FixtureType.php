@@ -11,6 +11,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -36,8 +37,20 @@ class FixtureType extends AbstractType
                 'choice_label' => static fn (TournamentGroup $group): string => $group->getCode().' - '.$group->getName(),
                 'required' => false,
                 'placeholder' => 'Sin grupo',
-                'help' => 'Recomendado para leaderboard por grupo.',
+                'help' => 'Recomendado para leaderboard por grupo. Dejar vacío en eliminatorias.',
             ])
+            ->add('stage', ChoiceType::class, [
+                'choices' => [
+                    'Grupos' => Fixture::STAGE_GROUP,
+                    'Dieciseisavos' => Fixture::STAGE_R32,
+                    'Octavos' => Fixture::STAGE_R16,
+                    'Cuartos' => Fixture::STAGE_QF,
+                    'Semifinal' => Fixture::STAGE_SF,
+                    'Final' => Fixture::STAGE_FINAL,
+                    '3er puesto' => Fixture::STAGE_THIRD,
+                ],
+            ])
+            ->add('fifaMatchId', TextType::class, ['required' => false, 'label' => 'FIFA Match ID'])
             ->add('kickoffAt', DateTimeType::class, [
                 'widget' => 'single_text',
                 'model_timezone' => 'UTC',
@@ -50,7 +63,9 @@ class FixtureType extends AbstractType
                 ],
             ])
             ->add('homeScore', IntegerType::class, ['required' => false])
-            ->add('awayScore', IntegerType::class, ['required' => false]);
+            ->add('awayScore', IntegerType::class, ['required' => false])
+            ->add('penaltyHomeScore', IntegerType::class, ['required' => false, 'label' => 'Penales local'])
+            ->add('penaltyAwayScore', IntegerType::class, ['required' => false, 'label' => 'Penales visitante']);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

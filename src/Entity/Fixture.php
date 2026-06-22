@@ -15,6 +15,25 @@ class Fixture
     public const STATUS_SCHEDULED = 'scheduled';
     public const STATUS_FINISHED = 'finished';
 
+    public const STAGE_GROUP = 'group';
+    public const STAGE_R32 = 'r32';
+    public const STAGE_R16 = 'r16';
+    public const STAGE_QF = 'qf';
+    public const STAGE_SF = 'sf';
+    public const STAGE_FINAL = 'final';
+    public const STAGE_THIRD = 'third';
+
+    /** @var list<string> */
+    public const STAGES = [
+        self::STAGE_GROUP,
+        self::STAGE_R32,
+        self::STAGE_R16,
+        self::STAGE_QF,
+        self::STAGE_SF,
+        self::STAGE_FINAL,
+        self::STAGE_THIRD,
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -42,6 +61,20 @@ class Fixture
     #[ORM\Column(nullable: true)]
     #[Assert\GreaterThanOrEqual(0)]
     private ?int $awayScore = null;
+
+    #[ORM\Column(length: 10, options: ['default' => 'group'])]
+    private string $stage = self::STAGE_GROUP;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\GreaterThanOrEqual(0)]
+    private ?int $penaltyHomeScore = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\GreaterThanOrEqual(0)]
+    private ?int $penaltyAwayScore = null;
+
+    #[ORM\Column(length: 20, nullable: true, unique: true)]
+    private ?string $fifaMatchId = null;
 
     #[ORM\Column(length: 20)]
     private string $status = self::STATUS_SCHEDULED;
@@ -172,6 +205,83 @@ class Fixture
     public function hasFinalScore(): bool
     {
         return $this->homeScore !== null && $this->awayScore !== null;
+    }
+
+    public function getStage(): string
+    {
+        return $this->stage;
+    }
+
+    public function setStage(string $stage): static
+    {
+        $this->stage = $stage;
+
+        return $this;
+    }
+
+    public function isKnockout(): bool
+    {
+        return $this->stage !== self::STAGE_GROUP;
+    }
+
+    public function getPenaltyHomeScore(): ?int
+    {
+        return $this->penaltyHomeScore;
+    }
+
+    public function setPenaltyHomeScore(?int $penaltyHomeScore): static
+    {
+        $this->penaltyHomeScore = $penaltyHomeScore;
+
+        return $this;
+    }
+
+    public function getPenaltyAwayScore(): ?int
+    {
+        return $this->penaltyAwayScore;
+    }
+
+    public function setPenaltyAwayScore(?int $penaltyAwayScore): static
+    {
+        $this->penaltyAwayScore = $penaltyAwayScore;
+
+        return $this;
+    }
+
+    public function wentToPenalties(): bool
+    {
+        return $this->penaltyHomeScore !== null && $this->penaltyAwayScore !== null;
+    }
+
+    public function hasFinalPenaltyScore(): bool
+    {
+        return $this->wentToPenalties();
+    }
+
+    public function getFifaMatchId(): ?string
+    {
+        return $this->fifaMatchId;
+    }
+
+    public function setFifaMatchId(?string $fifaMatchId): static
+    {
+        $this->fifaMatchId = $fifaMatchId;
+
+        return $this;
+    }
+
+    public function getStageLabel(): string
+    {
+        return match ($this->stage) {
+            self::STAGE_GROUP => 'Grupos',
+            self::STAGE_R32 => 'Dieciseisavos',
+            self::STAGE_R16 => 'Octavos',
+            self::STAGE_QF => 'Cuartos',
+            self::STAGE_SF => 'Semifinal',
+            self::STAGE_FINAL => 'Final',
+            self::STAGE_THIRD => '3er puesto',
+            default => $this->stage,
+        };
     }
 
     public function getCreatedAt(): \DateTimeImmutable

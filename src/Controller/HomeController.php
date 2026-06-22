@@ -180,7 +180,7 @@ class HomeController extends AbstractController
                 'deadlineIso' => $windowService->deadline($fixture)->format('c'),
                 'statusLabel' => $statusLabel,
                 'statusClass' => $statusClass,
-                'scoreboardText' => $hasScore ? sprintf('%d - %d', $fixture->getHomeScore(), $fixture->getAwayScore()) : null,
+                'scoreboardText' => $this->scoreboardText($fixture, $hasScore),
                 ...$this->pointsView($fixture, $prediction, $state, $hasScore, $paymentValidatedAt, $scoringService),
             ];
         }
@@ -207,12 +207,7 @@ class HomeController extends AbstractController
             return ['pointsText' => 'No cargaste predicción', 'pointsClass' => 'text-body-secondary', 'countsNote' => null];
         }
 
-        $points = $scoringService->pointsForScores(
-            $prediction->getPredictedHomeScore(),
-            $prediction->getPredictedAwayScore(),
-            $fixture->getHomeScore(),
-            $fixture->getAwayScore(),
-        );
+        $points = $scoringService->pointsForPrediction($prediction);
 
         if ($state === 'finished') {
             $pointsText = sprintf('🏆 Obtuviste: %d %s', $points, $points === 1 ? 'punto' : 'puntos');
@@ -233,8 +228,26 @@ class HomeController extends AbstractController
 
     private function groupCode(Fixture $fixture): string
     {
+        if ($fixture->isKnockout()) {
+            return $fixture->getStageLabel();
+        }
+
         $group = $fixture->getGroup() ?? $fixture->getHomeTeam()?->getGroup();
 
         return $group?->getCode() ?? '-';
+    }
+
+    private function scoreboardText(Fixture $fixture, bool $hasScore): ?string
+    {
+        if (!$hasScore) {
+            return null;
+        }
+
+        $text = sprintf('%d - %d', $fixture->getHomeScore(), $fixture->getAwayScore());
+        if ($fixture->wentToPenalties()) {
+            $text .= sprintf(' (%d - %d pen.)', $fixture->getPenaltyHomeScore(), $fixture->getPenaltyAwayScore());
+        }
+
+        return $text;
     }
 }

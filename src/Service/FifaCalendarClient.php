@@ -209,4 +209,38 @@ class FifaCalendarClient
             'away' => (int) $awayScore,
         ];
     }
+
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return array{home: int, away: int}|null
+     */
+    public function extractPenaltyScores(array $row): ?array
+    {
+        $homeScore = $row['HomeTeamPenaltyScore'] ?? null;
+        $awayScore = $row['AwayTeamPenaltyScore'] ?? null;
+
+        if (!is_int($homeScore) && !is_numeric($homeScore)) {
+            return null;
+        }
+
+        if (!is_int($awayScore) && !is_numeric($awayScore)) {
+            return null;
+        }
+
+        return [
+            'home' => (int) $homeScore,
+            'away' => (int) $awayScore,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    public function extractMatchId(array $row): ?string
+    {
+        $id = $row['IdMatch'] ?? null;
+
+        return is_string($id) || is_numeric($id) ? (string) $id : null;
+    }
 }

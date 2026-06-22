@@ -30,7 +30,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
             ->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchGroupStageMatches')->willReturn([
+        $fifaClient->method('fetchAllMatches')->willReturn([
             $this->fifaRow('CIV', 'ECU', 1, 0, 0),
         ]);
         $fifaClient->method('indexByTeamCodes')->willReturnCallback(
@@ -70,7 +70,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchGroupStageMatches')->willReturn([
+        $fifaClient->method('fetchAllMatches')->willReturn([
             $this->fifaRow('GER', 'CUW', 7, 1, 1),
         ]);
         $fifaClient->method('indexByTeamCodes')->willReturnCallback(
@@ -108,7 +108,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchGroupStageMatches')->willReturn([
+        $fifaClient->method('fetchAllMatches')->willReturn([
             $this->fifaRow('GER', 'CUW', 7, 1, 1),
         ]);
         $fifaClient->method('indexByTeamCodes')->willReturnCallback(
@@ -140,7 +140,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchGroupStageMatches')->willReturn([]);
+        $fifaClient->method('fetchAllMatches')->willReturn([]);
         $fifaClient->method('indexByTeamCodes')->willReturn([]);
         $fifaClient->method('matchKey')->willReturn('AAA_BBB');
 
@@ -167,7 +167,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchGroupStageMatches')->willReturn([
+        $fifaClient->method('fetchAllMatches')->willReturn([
             $this->fifaRow('AUS', 'TUR', 2, 0, 1),
         ]);
         $fifaClient->method('indexByTeamCodes')->willReturnCallback(
@@ -202,7 +202,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchGroupStageMatches')->willReturn([
+        $fifaClient->method('fetchAllMatches')->willReturn([
             $this->fifaRow('CIV', 'ECU', 0, 0, 0),
         ]);
         $fifaClient->method('indexByTeamCodes')->willReturnCallback(
@@ -285,7 +285,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixtureRepository->method('findNextScheduledFixture')->willReturn($nextFixture);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchGroupStageMatches')->willReturn([
+        $fifaClient->method('fetchAllMatches')->willReturn([
             $this->fifaRow('CIV', 'ECU', 1, 0, 1), // Finished
         ]);
         $fifaClient->method('indexByTeamCodes')->willReturn(['CIV_ECU' => $this->fifaRow('CIV', 'ECU', 1, 0, 1)]);

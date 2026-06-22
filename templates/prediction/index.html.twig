@@ -3,7 +3,7 @@
 {% block title %}Predicciones{% endblock %}
 
 {% block body %}
-<h1 class="h3 mb-3">Predicciones - Fase de Grupos</h1>
+<h1 class="h3 mb-3">Predicciones</h1>
 
 {% if not canParticipate %}
     <div class="alert alert-warning">Debes verificar tu correo para guardar predicciones. Cuando termines ese paso, este panel se desbloquea.</div>
@@ -25,7 +25,7 @@
     {% endif %}
 {% endif %}
 
-<p class="screen-note mb-3">Tip: solo se guardan filas con marcador completo. Si un partido está cerrado, la fila queda bloqueada y te muestra por qué.</p>
+<p class="screen-note mb-3">Tip: solo se guardan filas con marcador completo. En eliminatorias, si pronosticas empate debes indicar también los penales.</p>
 
 {% if canParticipate %}
 <div class="d-flex justify-content-end mb-2 gap-2 align-items-center">
@@ -33,7 +33,7 @@
     <button id="btn-save-all" class="btn btn-success">Guardar todo</button>
 </div>
 <div class="text-end mb-3">
-    <small class="text-body-secondary">Se envían solo los partidos con ambos goles cargados y la ventana abierta.</small>
+    <small class="text-body-secondary">Se envían solo los partidos con marcador completo (y penales si aplica) y la ventana abierta.</small>
 </div>
 {% endif %}
 <div class="mb-2">{% include '_daypart_legend.html.twig' %}</div>
@@ -41,7 +41,7 @@
 <table class="table align-middle mb-0 predictions-table">
     <thead>
         <tr>
-            <th>Grupo</th>
+            <th>Fase</th>
             <th>Partido</th>
             <th>Inicio local</th>
             <th>Tu predicción</th>
@@ -54,20 +54,16 @@
         {% set canEditFixture = fixtureCanEdit[fixture.id]|default(false) %}
         {% set formDisabled = (not canParticipate) or (not canEditFixture) %}
         <tr>
-            <td data-label="Grupo">{{ fixture.group ? fixture.group.code : (fixture.homeTeam.group ? fixture.homeTeam.group.code : '-') }}</td>
+            <td data-label="Fase">{{ fixture.knockout ? fixture.stageLabel : (fixture.group ? fixture.group.code : (fixture.homeTeam.group ? fixture.homeTeam.group.code : '-')) }}</td>
             <td data-label="Partido" class="predictions-table__match">{{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</td>
             <td data-label="Inicio local"><span class="js-local-datetime" data-daypart data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
             <td data-label="Tu predicción">
-                <form class="d-flex gap-2 prediction-form" data-turbo="false" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
-                    <input type="hidden" name="_token" value="{{ csrf_token('save_prediction_' ~ fixture.id) }}">
-                    <input type="number" min="0" inputmode="numeric" name="home" class="form-control prediction-score-input" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
-                    <span class="prediction-form-separator">-</span>
-                    <input type="number" min="0" inputmode="numeric" name="away" class="form-control prediction-score-input" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0" {{ formDisabled ? 'disabled' : '' }}>
-                    {% if canEditFixture %}
-                        <button class="btn btn-sm prediction-form-submit {{ p ? 'btn-outline-primary' : 'btn-primary' }}" {{ formDisabled ? 'disabled' : '' }}>{{ p ? 'Editar' : 'Guardar' }}</button>
-                    {% endif %}
-                    <span class="prediction-feedback pt-2" aria-live="polite"></span>
-                </form>
+                {% include 'prediction/_form_fields.html.twig' with {
+                    fixture: fixture,
+                    p: p,
+                    formDisabled: formDisabled,
+                    canEditFixture: canEditFixture,
+                } %}
             </td>
             <td class="predictions-table__status">
                 {% if fixture.status == 'finished' %}

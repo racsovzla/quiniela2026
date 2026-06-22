@@ -43,7 +43,7 @@ class SyncLiveFixtureScoresService
             return $stats;
         }
 
-        $fifaRows = $this->fifaCalendarClient->fetchGroupStageMatches();
+        $fifaRows = $this->fifaCalendarClient->fetchAllMatches();
         $fifaByKey = $this->fifaCalendarClient->indexByTeamCodes($fifaRows);
 
         foreach ($fixtures as $fixture) {
@@ -71,14 +71,19 @@ class SyncLiveFixtureScoresService
                 continue;
             }
 
+            $penaltyScores = $this->fifaCalendarClient->extractPenaltyScores($fifaRow);
             $shouldFinish = $this->fifaCalendarClient->isFinished($fifaRow);
             $newStatus = $shouldFinish ? Fixture::STATUS_FINISHED : Fixture::STATUS_SCHEDULED;
 
             $hasScoreChange = $fixture->getHomeScore() !== $scores['home']
                 || $fixture->getAwayScore() !== $scores['away'];
+            $hasPenaltyChange = $penaltyScores !== null && (
+                $fixture->getPenaltyHomeScore() !== $penaltyScores['home']
+                || $fixture->getPenaltyAwayScore() !== $penaltyScores['away']
+            );
             $hasStatusChange = $fixture->getStatus() !== $newStatus;
 
-            if (!$hasScoreChange && !$hasStatusChange) {
+            if (!$hasScoreChange && !$hasPenaltyChange && !$hasStatusChange) {
                 continue;
             }
 
@@ -87,6 +92,13 @@ class SyncLiveFixtureScoresService
                     ->setHomeScore($scores['home'])
                     ->setAwayScore($scores['away'])
                     ->setStatus($newStatus);
+
+                if ($penaltyScores !== null) {
+                    $fixture
+                        ->setPenaltyHomeScore($penaltyScores['home'])
+                        ->setPenaltyAwayScore($penaltyScores['away']);
+                }
+
                 $this->entityManager->persist($fixture);
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\Fixture;
 use App\Entity\Prediction;
 use App\Repository\PredictionRepository;
 
@@ -19,6 +20,40 @@ class ScoringService
     public function calculateLivePoints(Prediction $prediction): int
     {
         return $this->calculatePointsInternal($prediction, true);
+    }
+
+    public function calculateRegularPoints(Prediction $prediction): int
+    {
+        return $this->calculateRegularPointsInternal($prediction, false);
+    }
+
+    public function calculatePenaltyPoints(Prediction $prediction): int
+    {
+        return $this->calculatePenaltyPointsInternal($prediction, false);
+    }
+
+    /**
+     * Pure scoring for UI preview (no payment/status guards).
+     */
+    public function pointsForPrediction(Prediction $prediction): int
+    {
+        $fixture = $prediction->getFixture();
+        if (!$fixture || !$fixture->hasFinalScore()) {
+            return 0;
+        }
+
+        $realHome = $fixture->getHomeScore();
+        $realAway = $fixture->getAwayScore();
+        if ($realHome === null || $realAway === null) {
+            return 0;
+        }
+
+        return $this->pointsForPredictionScores(
+            $prediction,
+            $fixture,
+            $realHome,
+            $realAway,
+        );
     }
 
     /**
@@ -68,40 +103,78 @@ class ScoringService
 
     private function calculatePointsInternal(Prediction $prediction, bool $allowScheduledWithScore): int
     {
+        return $this->calculateRegularPointsInternal($prediction, $allowScheduledWithScore)
+            + $this->calculatePenaltyPointsInternal($prediction, $allowScheduledWithScore);
+    }
+
+    private function calculateRegularPointsInternal(Prediction $prediction, bool $allowScheduledWithScore): int
+    {
+        if (!$this->isEligibleForScoring($prediction, $allowScheduledWithScore)) {
+            return 0;
+        }
+
+        $fixture = $prediction->getFixture();
+        $realHome = $fixture?->getHomeScore();
+        $realAway = $fixture?->getAwayScore();
+        if ($realHome === null || $realAway === null) {
+            return 0;
+        }
+
+        return $this->pointsForScores(
+            $prediction->getPredictedHomeScore(),
+            $prediction->getPredictedAwayScore(),
+            $realHome,
+            $realAway,
+        );
+    }
+
+    private function calculatePenaltyPointsInternal(Prediction $prediction, bool $allowScheduledWithScore): int
+    {
+        if (!$this->isEligibleForScoring($prediction, $allowScheduledWithScore)) {
+            return 0;
+        }
+
+        $fixture = $prediction->getFixture();
+        if (!$fixture) {
+            return 0;
+        }
+
+        $realHome = $fixture->getHomeScore();
+        $realAway = $fixture->getAwayScore();
+        if ($realHome === null || $realAway === null) {
+            return 0;
+        }
+
+        return $this->penaltyPointsForPrediction($prediction, $fixture);
+    }
+
+    private function isEligibleForScoring(Prediction $prediction, bool $allowScheduledWithScore): bool
+    {
         $user = $prediction->getUser();
         if (!$user) {
-            return 0;
+            return false;
         }
 
         $paymentValidatedAt = $user->getPaymentValidatedAt();
         if (null === $paymentValidatedAt) {
-            return 0;
+            return false;
         }
 
         $fixture = $prediction->getFixture();
 
         if (!$fixture || !$fixture->hasFinalScore()) {
-            return 0;
+            return false;
         }
 
         if ($fixture->getKickoffAt() < $paymentValidatedAt) {
-            return 0;
+            return false;
         }
 
-        if (!$allowScheduledWithScore && $fixture->getStatus() !== \App\Entity\Fixture::STATUS_FINISHED) {
-            return 0;
+        if (!$allowScheduledWithScore && $fixture->getStatus() !== Fixture::STATUS_FINISHED) {
+            return false;
         }
 
-        $predHome = $prediction->getPredictedHomeScore();
-        $predAway = $prediction->getPredictedAwayScore();
-        $realHome = $fixture->getHomeScore();
-        $realAway = $fixture->getAwayScore();
-
-        if ($realHome === null || $realAway === null) {
-            return 0;
-        }
-
-        return $this->pointsForScores($predHome, $predAway, $realHome, $realAway);
+        return true;
     }
 
     /**
@@ -115,6 +188,54 @@ class ScoringService
         }
 
         return ($predHome <=> $predAway) === ($realHome <=> $realAway) ? 1 : 0;
+    }
+
+    private function pointsForPredictionScores(
+        Prediction $prediction,
+        Fixture $fixture,
+        int $realHome,
+        int $realAway,
+    ): int {
+        $regular = $this->pointsForScores(
+            $prediction->getPredictedHomeScore(),
+            $prediction->getPredictedAwayScore(),
+            $realHome,
+            $realAway,
+        );
+
+        return $regular + $this->penaltyPointsForPrediction($prediction, $fixture);
+    }
+
+    private function penaltyPointsForPrediction(Prediction $prediction, Fixture $fixture): int
+    {
+        if (!$fixture->isKnockout()) {
+            return 0;
+        }
+
+        if ($prediction->getPredictedHomeScore() !== $prediction->getPredictedAwayScore()) {
+            return 0;
+        }
+
+        if (!$fixture->wentToPenalties()) {
+            return 0;
+        }
+
+        if (!$prediction->hasPenaltyPrediction()) {
+            return 0;
+        }
+
+        $realPenHome = $fixture->getPenaltyHomeScore();
+        $realPenAway = $fixture->getPenaltyAwayScore();
+        if ($realPenHome === null || $realPenAway === null) {
+            return 0;
+        }
+
+        return $this->pointsForScores(
+            $prediction->getPredictedPenaltyHomeScore(),
+            $prediction->getPredictedPenaltyAwayScore(),
+            $realPenHome,
+            $realPenAway,
+        );
     }
 
     /**
@@ -208,7 +329,7 @@ class ScoringService
 
             $points = $this->calculatePoints($prediction);
             $rows[$key]['points'] += $points;
-            if ($points === 3) {
+            if ($this->calculateRegularPoints($prediction) === 3) {
                 $rows[$key]['exactHits']++;
             }
         }

@@ -26,9 +26,9 @@
                                 {% set isFinished = fixture.status == 'finished' %}
 
                                 {% if isFinished %}
-                                    <span class="badge text-bg-secondary">Finalizado: {{ fixture.homeScore }} - {{ fixture.awayScore }}</span>
+                                    <span class="badge text-bg-secondary">Finalizado: {{ fixture.homeScore }} - {{ fixture.awayScore }}{% if fixture.wentToPenalties %} ({{ fixture.penaltyHomeScore }} - {{ fixture.penaltyAwayScore }} pen.){% endif %}</span>
                                 {% elseif isInProgress %}
-                                    <span class="badge text-bg-info">En curso: {{ fixture.homeScore }} - {{ fixture.awayScore }}</span>
+                                    <span class="badge text-bg-info">En curso: {{ fixture.homeScore }} - {{ fixture.awayScore }}{% if fixture.wentToPenalties %} ({{ fixture.penaltyHomeScore }} - {{ fixture.penaltyAwayScore }} pen.){% endif %}</span>
                                 {% else %}
                                     <span class="badge text-bg-dark border border-secondary text-secondary">Programado</span>
                                 {% endif %}
@@ -46,17 +46,31 @@
 
                     {% for prediction in predictions %}
                         {% set points = scoringService.calculatePoints(prediction) %}
+                        {% set regularPoints = scoringService.calculateRegularPoints(prediction) %}
+                        {% set penaltyPoints = scoringService.calculatePenaltyPoints(prediction) %}
                         <tr style="border-bottom: 1px solid rgba(156, 179, 197, 0.08);">
                             <td class="ps-3 py-2" style="color: var(--wc-text);">{{ prediction.user.name }}</td>
-                            <td class="py-2"><strong style="color: var(--wc-accent);">{{ prediction.predictedHomeScore }} - {{ prediction.predictedAwayScore }}</strong></td>
+                            <td class="py-2">
+                                <strong style="color: var(--wc-accent);">{{ prediction.predictedHomeScore }} - {{ prediction.predictedAwayScore }}</strong>
+                                {% if prediction.penaltyPrediction %}
+                                    <span class="small" style="color: var(--wc-muted);"> · pen. {{ prediction.predictedPenaltyHomeScore }} - {{ prediction.predictedPenaltyAwayScore }}</span>
+                                {% endif %}
+                            </td>
                             <td class="pe-3 py-2 text-end">
                                 {% if fixture.status == 'finished' %}
-                                    {% if points == 3 %}
+                                    {% if points >= 4 %}
+                                        <span class="badge text-bg-success fw-semibold">+{{ points }} pts</span>
+                                    {% elseif points == 3 %}
                                         <span class="badge text-bg-success fw-semibold">+3 pts</span>
+                                    {% elseif points == 2 %}
+                                        <span class="badge text-bg-primary fw-semibold">+2 pts</span>
                                     {% elseif points == 1 %}
                                         <span class="badge text-bg-primary fw-semibold">+1 pt</span>
                                     {% else %}
                                         <span class="badge text-bg-dark border border-secondary text-muted fw-normal">0 pts</span>
+                                    {% endif %}
+                                    {% if penaltyPoints > 0 %}
+                                        <small class="d-block" style="color: var(--wc-muted);">{{ regularPoints }}+{{ penaltyPoints }} pen.</small>
                                     {% endif %}
                                 {% else %}
                                     <span style="color: var(--wc-muted); font-size: 0.9rem;">-</span>

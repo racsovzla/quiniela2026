@@ -208,6 +208,98 @@ class ScoringServiceTest extends TestCase
         }
     }
 
+    public function testKnockoutDrawWithExactPenaltiesAwardsSixPoints(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+
+        $prediction = $this->buildKnockoutPrediction(
+            'Alice',
+            1,
+            1,
+            1,
+            4,
+            3,
+            1,
+            1,
+            4,
+            3,
+            $paymentAt,
+        );
+
+        self::assertSame(6, $service->calculatePoints($prediction));
+        self::assertSame(3, $service->calculateRegularPoints($prediction));
+        self::assertSame(3, $service->calculatePenaltyPoints($prediction));
+    }
+
+    public function testKnockoutDrawWithCorrectPenaltyWinnerAwardsTwoPoints(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+
+        $prediction = $this->buildKnockoutPrediction(
+            'Alice',
+            1,
+            0,
+            0,
+            5,
+            4,
+            1,
+            1,
+            4,
+            3,
+            $paymentAt,
+        );
+
+        self::assertSame(2, $service->calculatePoints($prediction));
+    }
+
+    public function testKnockoutDrawWithoutRealPenaltiesAwardsOnlyRegularPoints(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+
+        $prediction = $this->buildKnockoutPrediction(
+            'Alice',
+            1,
+            1,
+            1,
+            4,
+            3,
+            1,
+            1,
+            null,
+            null,
+            $paymentAt,
+        );
+
+        self::assertSame(3, $service->calculatePoints($prediction));
+        self::assertSame(0, $service->calculatePenaltyPoints($prediction));
+    }
+
+    public function testKnockoutWinnerPredictionIgnoresPenaltyBonus(): void
+    {
+        $service = new ScoringService($this->predictionRepository);
+        $paymentAt = new \DateTimeImmutable('2026-01-01 00:00:00', new \DateTimeZone('UTC'));
+
+        $prediction = $this->buildKnockoutPrediction(
+            'Alice',
+            1,
+            1,
+            0,
+            null,
+            null,
+            2,
+            0,
+            4,
+            3,
+            $paymentAt,
+        );
+
+        self::assertSame(1, $service->calculatePoints($prediction));
+        self::assertSame(0, $service->calculatePenaltyPoints($prediction));
+    }
+
     private function buildPrediction(
         string $name,
         int $userId,
@@ -237,6 +329,45 @@ class ScoringServiceTest extends TestCase
 
         $reflection = new \ReflectionProperty(User::class, 'id');
         $reflection->setValue($user, $userId);
+
+        return $prediction;
+    }
+
+    private function buildKnockoutPrediction(
+        string $name,
+        int $userId,
+        int $predHome,
+        int $predAway,
+        ?int $predPenHome,
+        ?int $predPenAway,
+        int $realHome,
+        int $realAway,
+        ?int $realPenHome,
+        ?int $realPenAway,
+        ?\DateTimeImmutable $paymentValidatedAt = null,
+    ): Prediction {
+        $prediction = $this->buildPrediction(
+            $name,
+            $userId,
+            $predHome,
+            $predAway,
+            $realHome,
+            $realAway,
+            $paymentValidatedAt,
+        );
+
+        $fixture = $prediction->getFixture();
+        $fixture?->setStage(Fixture::STAGE_QF);
+
+        if ($predPenHome !== null && $predPenAway !== null) {
+            $prediction
+                ->setPredictedPenaltyHomeScore($predPenHome)
+                ->setPredictedPenaltyAwayScore($predPenAway);
+        }
+
+        if ($realPenHome !== null && $realPenAway !== null) {
+            $fixture?->setPenaltyHomeScore($realPenHome)->setPenaltyAwayScore($realPenAway);
+        }
 
         return $prediction;
     }

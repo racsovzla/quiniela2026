@@ -57,9 +57,8 @@ class PredictionController extends AbstractController
             $fixtureCanEdit[$fixtureId] = $canEdit;
             $fixtureDeadlineIso[$fixtureId] = $deadline->format(DATE_ATOM);
 
-            $hasPrediction = isset($predictionByFixture[$fixtureId]) && 
-                             $predictionByFixture[$fixtureId]->getPredictedHomeScore() !== null &&
-                             $predictionByFixture[$fixtureId]->getPredictedAwayScore() !== null;
+            $hasPrediction = isset($predictionByFixture[$fixtureId])
+                && $predictionByFixture[$fixtureId]->isCompleteForFixture();
 
             if (!$hasPrediction && $canEdit) {
                 $pendingCount++;
@@ -141,6 +140,37 @@ class PredictionController extends AbstractController
             return $this->redirectToRoute('app_predictions');
         }
 
+        $penaltyHome = null;
+        $penaltyAway = null;
+
+        if ($fixture->isKnockout() && $home === $away) {
+            $penaltyHomeRaw = filter_var($request->request->get('penalty_home'), FILTER_VALIDATE_INT);
+            $penaltyAwayRaw = filter_var($request->request->get('penalty_away'), FILTER_VALIDATE_INT);
+
+            if ($penaltyHomeRaw === false || $penaltyAwayRaw === false || $penaltyHomeRaw < 0 || $penaltyAwayRaw < 0) {
+                $message = 'En eliminatorias con empate debes indicar el marcador de penales.';
+                if ($isAjax) {
+                    return new JsonResponse(['error' => $message], 422);
+                }
+                $this->addFlash('error', $message);
+
+                return $this->redirectToRoute('app_predictions');
+            }
+
+            if ($penaltyHomeRaw === $penaltyAwayRaw) {
+                $message = 'Los penales deben tener un ganador (no puede ser empate).';
+                if ($isAjax) {
+                    return new JsonResponse(['error' => $message], 422);
+                }
+                $this->addFlash('error', $message);
+
+                return $this->redirectToRoute('app_predictions');
+            }
+
+            $penaltyHome = (int) $penaltyHomeRaw;
+            $penaltyAway = (int) $penaltyAwayRaw;
+        }
+
         $prediction = $predictionRepository->findOneByUserAndFixture($user, $fixture);
         if (!$prediction instanceof Prediction) {
             $prediction = (new Prediction())
@@ -151,7 +181,9 @@ class PredictionController extends AbstractController
 
         $prediction
             ->setPredictedHomeScore((int) $home)
-            ->setPredictedAwayScore((int) $away);
+            ->setPredictedAwayScore((int) $away)
+            ->setPredictedPenaltyHomeScore($penaltyHome)
+            ->setPredictedPenaltyAwayScore($penaltyAway);
 
         $entityManager->flush();
 

@@ -20,20 +20,21 @@
             </div>
 
             {% if v.state == 'open' and canEditFixture %}
-                <form class="d-flex align-items-center gap-2 prediction-form" data-turbo="false" method="post" action="{{ path('app_prediction_save', {id: fixture.id}) }}">
-                    <input type="hidden" name="_token" value="{{ csrf_token('save_prediction_' ~ fixture.id) }}">
-                    <input type="number" min="0" inputmode="numeric" name="home" class="form-control prediction-score-input" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0">
-                    <span class="prediction-form-separator">-</span>
-                    <input type="number" min="0" inputmode="numeric" name="away" class="form-control prediction-score-input" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0">
-                    <button class="btn btn-sm prediction-form-submit {{ p ? 'btn-outline-primary' : 'btn-primary' }}">{{ p ? 'Editar' : 'Guardar' }}</button>
-                    <span class="prediction-feedback" aria-live="polite"></span>
-                </form>
+                {% include 'prediction/_form_fields.html.twig' with {
+                    fixture: fixture,
+                    p: p,
+                    formDisabled: false,
+                    canEditFixture: true,
+                } %}
                 <small class="d-block text-body-secondary mt-2 js-deadline-countdown" data-deadline="{{ v.deadlineIso }}"></small>
             {% else %}
                 <div class="small">
                     <span class="text-body-secondary">Tu predicción:</span>
                     {% if p %}
                         <span class="fw-semibold">{{ p.predictedHomeScore }} - {{ p.predictedAwayScore }}</span>
+                        {% if p.penaltyPrediction %}
+                            <span class="text-body-secondary">(pen. {{ p.predictedPenaltyHomeScore }} - {{ p.predictedPenaltyAwayScore }})</span>
+                        {% endif %}
                     {% else %}
                         <span class="text-warning fw-semibold">sin cargar</span>
                     {% endif %}
