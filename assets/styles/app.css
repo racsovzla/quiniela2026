@@ -700,3 +700,18 @@ input[type='password']::-ms-clear {
         min-height: 1.25rem;
     }
 }
+
+/* Iconos de franja horaria (día / noche / madrugada) */
+.daypart-icon {
+    width: 1em;
+    height: 1em;
+    flex: none;
+    vertical-align: -0.15em;
+    margin-right: 0.35em;
+}
+
+.daypart-icon--dia { color: #f2b01e; }
+.daypart-icon--noche { color: #fb7a3c; }
+.daypart-icon--madrugada { color: #8a8dff; }
+
+.daypart-legend .daypart-icon { margin-right: 0.3em; }

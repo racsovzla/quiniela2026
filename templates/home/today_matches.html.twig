@@ -20,6 +20,8 @@
     {% if views is empty %}
         <div class="alert alert-light border text-center mb-0">No hay partidos próximos cargados aún.</div>
     {% else %}
+        <div class="mb-3">{% include '_daypart_legend.html.twig' %}</div>
+
         {% set hasOpenForm = false %}
         {% for v in views %}
             {% if v.state == 'open' %}{% set hasOpenForm = true %}{% endif %}
