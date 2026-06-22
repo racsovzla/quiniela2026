@@ -8,6 +8,8 @@ class FifaCalendarClient
 {
     public const GROUP_STAGE_API_URL = 'https://api.fifa.com/api/v3/calendar/matches?language=en&idCompetition=17&idSeason=285023&idStage=289273&count=400';
 
+    public const ALL_MATCHES_API_URL = 'https://api.fifa.com/api/v3/calendar/matches?language=en&idCompetition=17&idSeason=285023&count=500';
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
     ) {
@@ -20,8 +22,31 @@ class FifaCalendarClient
      */
     public function fetchGroupStageMatches(): array
     {
+        return $this->fetchResults(self::GROUP_STAGE_API_URL);
+    }
+
+    /**
+     * All matches of the competition/season across every stage (group stage now, plus
+     * knockout once FIFA publishes it). Same payload shape as the group-stage feed.
+     *
+     * @return list<array<string, mixed>>
+     *
+     * @throws \RuntimeException
+     */
+    public function fetchAllMatches(): array
+    {
+        return $this->fetchResults(self::ALL_MATCHES_API_URL);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     *
+     * @throws \RuntimeException
+     */
+    private function fetchResults(string $url): array
+    {
         try {
-            $response = $this->httpClient->request('GET', self::GROUP_STAGE_API_URL);
+            $response = $this->httpClient->request('GET', $url);
             $payload = $response->toArray();
         } catch (\Throwable $exception) {
             throw new \RuntimeException('Could not fetch FIFA API: '.$exception->getMessage(), 0, $exception);
@@ -85,6 +110,72 @@ class FifaCalendarClient
         }
 
         return null;
+    }
+
+    /**
+     * Maps a FIFA row to one of our stage keys: group, r32, r16, qf, sf, final, third.
+     *
+     * @param array<string, mixed> $row
+     */
+    public function extractStageKey(array $row): string
+    {
+        if ($this->extractGroupCode($row) !== null) {
+            return 'group';
+        }
+
+        $stageName = '';
+        foreach (($row['StageName'] ?? []) as $description) {
+            if (is_array($description) && is_string($description['Description'] ?? null)) {
+                $stageName .= ' '.$description['Description'];
+            }
+        }
+        $stageName = strtolower($stageName);
+
+        return match (true) {
+            str_contains($stageName, 'round of 32') => 'r32',
+            str_contains($stageName, 'round of 16') => 'r16',
+            str_contains($stageName, 'quarter') => 'qf',
+            str_contains($stageName, 'semi') => 'sf',
+            str_contains($stageName, 'third') || str_contains($stageName, '3rd') => 'third',
+            str_contains($stageName, 'final') => 'final',
+            default => 'group',
+        };
+    }
+
+    /**
+     * Team FIFA code (3 letters) for 'Home'/'Away', or null when undecided.
+     *
+     * @param array<string, mixed> $row
+     */
+    public function teamCode(array $row, string $side): ?string
+    {
+        $code = $row[$side]['Abbreviation'] ?? null;
+
+        return is_string($code) && $code !== '' ? strtoupper($code) : null;
+    }
+
+    /**
+     * Bracket placeholder (e.g. "A1", "W73") for an undecided knockout slot.
+     *
+     * @param array<string, mixed> $row
+     */
+    public function teamPlaceholder(array $row, string $side): ?string
+    {
+        $placeholder = $row['Home' === $side ? 'PlaceholderA' : 'PlaceholderB'] ?? null;
+
+        return is_string($placeholder) && $placeholder !== '' ? $placeholder : null;
+    }
+
+    /**
+     * Kickoff date as an ISO-8601 UTC string, or null.
+     *
+     * @param array<string, mixed> $row
+     */
+    public function kickoffIso(array $row): ?string
+    {
+        $date = $row['Date'] ?? null;
+
+        return is_string($date) && $date !== '' ? $date : null;
     }
 
     /**
