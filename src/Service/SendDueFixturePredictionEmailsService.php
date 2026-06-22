@@ -17,6 +17,7 @@ class SendDueFixturePredictionEmailsService
         private readonly PredictionRepository $predictionRepository,
         private readonly UserRepository $userRepository,
         private readonly FixturePredictionEmailService $fixturePredictionEmailService,
+        private readonly FifaFixtureDiscoveryService $fifaFixtureDiscoveryService,
         private readonly EntityManagerInterface $entityManager,
     ) {
     }
@@ -27,6 +28,9 @@ class SendDueFixturePredictionEmailsService
     public function dispatchDueEmails(?\DateTimeImmutable $nowUtc = null, bool $dryRun = false): array
     {
         $nowUtc ??= new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+        $this->fifaFixtureDiscoveryService->importNewFixtures($dryRun);
+
         $catchUpSinceUtc = $nowUtc->modify(sprintf('-%d hours', self::CATCH_UP_HOURS));
 
         $fixtures = $this->fixtureRepository->findDueForPredictionEmail($nowUtc, $catchUpSinceUtc);

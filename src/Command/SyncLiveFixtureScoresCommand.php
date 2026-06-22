@@ -53,6 +53,10 @@ class SyncLiveFixtureScoresCommand extends Command
             ['Matched' => (string) $stats['matched']],
             ['Updated' => (string) $stats['updated']],
             ['Finished' => (string) $stats['finished']],
+            ['Postponed' => (string) $stats['postponed']],
+            ['Suspended' => (string) $stats['suspended']],
+            ['Schedules created' => (string) $stats['schedulesCreated']],
+            ['Schedules updated' => (string) $stats['schedulesUpdated']],
             ['Skipped' => (string) $stats['skipped']],
             ['Mode' => $dryRun ? 'DRY RUN (no DB writes)' : 'APPLIED'],
         );

@@ -7,6 +7,7 @@ use App\Entity\Team;
 use App\Repository\FixtureRepository;
 use App\Repository\PredictionRepository;
 use App\Repository\UserRepository;
+use App\Service\FifaFixtureDiscoveryService;
 use App\Service\FixturePredictionEmailService;
 use App\Service\SendDueFixturePredictionEmailsService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -46,6 +47,7 @@ class SendDueFixturePredictionEmailsServiceTest extends TestCase
             $predictionRepository,
             $userRepository,
             $emailService,
+            $this->createDiscoveryMock(),
             $entityManager,
         );
 
@@ -77,6 +79,7 @@ class SendDueFixturePredictionEmailsServiceTest extends TestCase
             $predictionRepository,
             $this->createMock(UserRepository::class),
             $this->createMock(FixturePredictionEmailService::class),
+            $this->createDiscoveryMock(),
             $entityManager,
         );
 
@@ -114,6 +117,7 @@ class SendDueFixturePredictionEmailsServiceTest extends TestCase
             $predictionRepository,
             $userRepository,
             $emailService,
+            $this->createDiscoveryMock(),
             $entityManager,
         );
 
@@ -122,6 +126,19 @@ class SendDueFixturePredictionEmailsServiceTest extends TestCase
         self::assertSame(1, $stats['sent']);
         self::assertSame(1, $stats['recipientCount']);
         self::assertNotNull($fixture->getPredictionsEmailSentAt());
+    }
+
+    private function createDiscoveryMock(): FifaFixtureDiscoveryService
+    {
+        $discovery = $this->createMock(FifaFixtureDiscoveryService::class);
+        $discovery->method('importNewFixtures')->willReturn([
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'createdFixtures' => [],
+        ]);
+
+        return $discovery;
     }
 
     private function createFixture(\DateTimeImmutable $kickoffAt): Fixture

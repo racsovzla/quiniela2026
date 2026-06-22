@@ -15,9 +15,7 @@ class PredictionWindowService
 
     public function canEditAt(Fixture $fixture, \DateTimeImmutable $nowUtc): bool
     {
-        $deadline = $this->deadline($fixture);
-
-        return $nowUtc < $deadline;
+        return $fixture->isEditableAt($nowUtc);
     }
 
     public function deadline(Fixture $fixture): \DateTimeImmutable

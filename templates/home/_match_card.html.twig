@@ -17,9 +17,12 @@
 
             <div class="small text-body-secondary mb-3">
                 <span class="js-local-datetime" data-daypart data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span>
+                {% if v.statusNote %}
+                    <span class="d-block text-warning mt-1">{{ v.statusNote }}</span>
+                {% endif %}
             </div>
 
-            {% if v.state == 'open' and canEditFixture %}
+            {% if v.state in ['open', 'postponed', 'suspended'] and canEditFixture %}
                 {% include 'prediction/_form_fields.html.twig' with {
                     fixture: fixture,
                     p: p,

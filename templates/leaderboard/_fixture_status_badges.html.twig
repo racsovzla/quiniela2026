@@ -1,0 +1,19 @@
+{% set kickoffTs = fixture.kickoffAt|date('U') %}
+{% set nowTs = 'now'|date('U') %}
+{% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null %}
+{% set isInProgress = fixture.status in ['scheduled', 'rescheduled'] and (kickoffTs <= nowTs or hasLoadedScore) %}
+{% set isFinished = fixture.status == 'finished' %}
+
+{% if isFinished %}
+    <span class="badge text-bg-secondary">{{ fixture.statusLabel }}</span>
+{% elseif fixture.status == 'postponed' %}
+    <span class="badge {{ fixture.statusBadgeClass }}">{{ fixture.statusLabel }}</span>
+{% elseif fixture.status == 'suspended' %}
+    <span class="badge {{ fixture.statusBadgeClass }}">{{ fixture.statusLabel }}</span>
+{% elseif fixture.status == 'rescheduled' %}
+    <span class="badge {{ fixture.statusBadgeClass }}">{{ fixture.statusLabel }}</span>
+{% elseif isInProgress %}
+    <span class="badge text-bg-info">En curso</span>
+{% else %}
+    <span class="badge text-bg-primary">Programado</span>
+{% endif %}

@@ -157,6 +157,64 @@ class FifaFixtureDiscoveryServiceTest extends TestCase
         self::assertSame(1, $stats['skipped']);
     }
 
+    public function testReschedulesPostponedFixtureWithFutureKickoff(): void
+    {
+        $home = (new Team())->setCode('FRA')->setName('France');
+        $away = (new Team())->setCode('IRQ')->setName('Iraq');
+        $group = (new TournamentGroup())->setCode('D')->setName('Group D');
+
+        $existing = (new Fixture())
+            ->setHomeTeam($home)
+            ->setAwayTeam($away)
+            ->setGroup($group)
+            ->setStage(Fixture::STAGE_GROUP)
+            ->setKickoffAt(new \DateTimeImmutable('2026-06-22 18:00:00', new \DateTimeZone('UTC')))
+            ->setStatus(Fixture::STATUS_POSTPONED)
+            ->setFifaMatchId('400021500')
+            ->setHomeScore(0)
+            ->setAwayScore(0)
+            ->setPredictionsEmailSentAt(new \DateTimeImmutable('2026-06-22 17:00:00', new \DateTimeZone('UTC')));
+
+        $row = [
+            'Home' => ['Abbreviation' => 'FRA'],
+            'Away' => ['Abbreviation' => 'IRQ'],
+            'IdMatch' => '400021500',
+            'Date' => '2026-06-25T20:00:00Z',
+            'GroupName' => [['Description' => 'Group D']],
+        ];
+
+        $this->fifaCalendarClient->method('hasBothTeamsConfirmed')->willReturn(true);
+        $this->fifaCalendarClient->method('extractStageKey')->willReturn(Fixture::STAGE_GROUP);
+        $this->fifaCalendarClient->method('extractGroupCode')->willReturn('D');
+        $this->fifaCalendarClient->method('teamCode')->willReturnCallback(
+            static fn (array $r, string $side): ?string => $side === 'Home' ? 'FRA' : 'IRQ',
+        );
+        $this->fifaCalendarClient->method('kickoffIso')->willReturn('2026-06-25T20:00:00Z');
+        $this->fifaCalendarClient->method('extractMatchId')->willReturn('400021500');
+
+        $this->teamRepository->method('findOneBy')->willReturnCallback(
+            static fn (array $criteria) => match ($criteria['code'] ?? null) {
+                'FRA' => $home,
+                'IRQ' => $away,
+                default => null,
+            },
+        );
+
+        $this->groupRepository->method('findOneBy')->with(['code' => 'D'])->willReturn($group);
+        $this->fixtureRepository->method('findOneByFifaMatchId')->willReturn($existing);
+        $this->entityManager->expects(self::once())->method('persist')->with($existing);
+        $this->entityManager->expects(self::once())->method('flush');
+
+        $service = $this->createService();
+        $stats = $service->syncFromRows([$row]);
+
+        self::assertSame(0, $stats['created']);
+        self::assertSame(1, $stats['updated']);
+        self::assertSame(Fixture::STATUS_RESCHEDULED, $existing->getStatus());
+        self::assertNull($existing->getHomeScore());
+        self::assertNull($existing->getPredictionsEmailSentAt());
+    }
+
     /**
      * @return array<string, mixed>
      */

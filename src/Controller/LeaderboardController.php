@@ -29,7 +29,9 @@ class LeaderboardController extends AbstractController
             $groupCode = $fixture->getGroup()?->getCode() ?? '-';
             $fixturesByGroup[$groupCode][] = $fixture;
 
-            if ($fixture->getStatus() === \App\Entity\Fixture::STATUS_SCHEDULED && !isset($groupNextKickoff[$groupCode])) {
+            if (in_array($fixture->getStatus(), [Fixture::STATUS_SCHEDULED, Fixture::STATUS_RESCHEDULED], true)
+                && !isset($groupNextKickoff[$groupCode])
+            ) {
                 $groupNextKickoff[$groupCode] = $fixture->getKickoffAt()->getTimestamp();
             }
         }
@@ -76,24 +78,29 @@ class LeaderboardController extends AbstractController
                 $fixA = $a['fixture'];
                 $fixB = $b['fixture'];
 
-                if ($fixA->getStatus() !== $fixB->getStatus()) {
-                    return $fixA->getStatus() === \App\Entity\Fixture::STATUS_SCHEDULED ? -1 : 1;
+                $aActive = in_array($fixA->getStatus(), Fixture::activeStatuses(), true)
+                    && $fixA->getStatus() !== Fixture::STATUS_FINISHED;
+                $bActive = in_array($fixB->getStatus(), Fixture::activeStatuses(), true)
+                    && $fixB->getStatus() !== Fixture::STATUS_FINISHED;
+
+                if ($aActive !== $bActive) {
+                    return $aActive ? -1 : 1;
                 }
 
                 $timeA = $fixA->getKickoffAt()->getTimestamp();
                 $timeB = $fixB->getKickoffAt()->getTimestamp();
 
-                if ($fixA->getStatus() === \App\Entity\Fixture::STATUS_SCHEDULED) {
+                if ($aActive) {
                     return $timeA <=> $timeB;
-                } else {
-                    return $timeB <=> $timeA;
                 }
+
+                return $timeB <=> $timeA;
             });
         }
         unset($fixtures);
 
         $rows = $this->withSharedPositions($scoringService->leaderboard());
-        $remainingCount = $fixtureRepository->count(['status' => Fixture::STATUS_SCHEDULED]);
+        $remainingCount = $fixtureRepository->countActiveFixtures();
 
         $latestFinished = $fixtureRepository->findLatestFinished(6);
         $nextScheduled = $fixtureRepository->findNextScheduled(6);

@@ -104,6 +104,32 @@ class HomeTodayMatchesTest extends WebTestCase
         self::assertStringContainsString('Puntos provisionales: +0', $entry['pointsText']);
     }
 
+    public function testPostponedFixtureShowsRetrasadoBadge(): void
+    {
+        $client = static::createClient();
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+        $user = $this->createUser($client, $now->modify('-7 days'));
+        $fixture = $this->createFixture(
+            $client,
+            $this->kickoffWithinWindow($now, '-2 hours'),
+            Fixture::STATUS_POSTPONED,
+            null,
+            null,
+        );
+        $this->createPrediction($client, $user, $fixture, 2, 1);
+
+        $client->loginUser($user);
+        $client->request('GET', '/home/today-matches?tz=UTC');
+
+        self::assertResponseIsSuccessful();
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('data-fixture-id="'.$fixture->getId().'"', $content);
+        self::assertSelectorTextContains('[data-fixture-id="'.$fixture->getId().'"] [data-role="status-badge"]', 'Retrasado');
+        self::assertSelectorTextContains('[data-fixture-id="'.$fixture->getId().'"] [data-role="scoreboard"]', 'vs');
+        self::assertStringNotContainsString('EN VIVO', (string) $content);
+    }
+
     /**
      * Returns a kickoff that is both in the past and inside the current calendar day
      * ([today 00:00, tomorrow 00:00) in UTC, matching the controller for ?tz=UTC), so the
