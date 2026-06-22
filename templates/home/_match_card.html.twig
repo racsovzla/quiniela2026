@@ -16,7 +16,7 @@
             </div>
 
             <div class="small text-body-secondary mb-3">
-                <span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span>
+                <span class="js-local-datetime" data-daypart data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span>
             </div>
 
             {% if v.state == 'open' and canEditFixture %}
