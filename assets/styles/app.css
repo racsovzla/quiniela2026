@@ -737,3 +737,13 @@ input[type='password']::-ms-clear {
     width: 1%;
     white-space: nowrap;
 }
+
+.phases-team-status--qualified {
+    color: #198754;
+    font-weight: 600;
+}
+
+.phases-team-status--eliminated {
+    color: #dc3545;
+    font-weight: 600;
+}

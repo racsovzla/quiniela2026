@@ -86,4 +86,19 @@ class WhatsAppMessageFormatter
 
         return implode("\n", $lines);
     }
+
+    public function formatNewFixtureAvailable(
+        string $phaseName,
+        string $homeTeamName,
+        string $awayTeamName,
+        \DateTimeImmutable $kickoffAt,
+    ): string {
+        return implode("\n", [
+            '🆕 *Nuevo partido en quiniela*',
+            '',
+            sprintf('*%s*', $phaseName),
+            sprintf('*%s* vs *%s*', $homeTeamName, $awayTeamName),
+            sprintf('📅 %s UTC', $kickoffAt->format('d/m/Y H:i')),
+        ]);
+    }
 }

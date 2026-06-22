@@ -18,9 +18,12 @@ class TournamentGroup
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 2, unique: true)]
+    #[ORM\Column(length: 10, unique: true)]
     #[Assert\NotBlank]
-    #[Assert\Regex(pattern: '/^[A-Z]{1,2}$/', message: 'Use A-L as group code.')]
+    #[Assert\Regex(
+        pattern: '/^(?:[A-L]|r32|r16|qf|sf|final|third)$/i',
+        message: 'Use A-L for groups or a knockout phase code (r32, r16, qf, sf, final, third).',
+    )]
     private string $code;
 
     #[ORM\Column(length: 120)]
@@ -57,7 +60,10 @@ class TournamentGroup
 
     public function setCode(string $code): static
     {
-        $this->code = strtoupper(trim($code));
+        $code = trim($code);
+        $this->code = preg_match('/^[A-L]$/i', $code) === 1
+            ? strtoupper($code)
+            : strtolower($code);
 
         return $this;
     }

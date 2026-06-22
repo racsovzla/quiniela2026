@@ -270,18 +270,41 @@ class Fixture
         return $this;
     }
 
-    public function getStageLabel(): string
+    public static function stageGroupName(string $stage): string
     {
-        return match ($this->stage) {
-            self::STAGE_GROUP => 'Grupos',
+        return match ($stage) {
             self::STAGE_R32 => 'Dieciseisavos',
             self::STAGE_R16 => 'Octavos',
-            self::STAGE_QF => 'Cuartos',
+            self::STAGE_QF => 'Cuartos de final',
             self::STAGE_SF => 'Semifinal',
             self::STAGE_FINAL => 'Final',
-            self::STAGE_THIRD => '3er puesto',
-            default => $this->stage,
+            self::STAGE_THIRD => 'Tercer puesto',
+            default => $stage,
         };
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function knockoutStages(): array
+    {
+        return [
+            self::STAGE_R32,
+            self::STAGE_R16,
+            self::STAGE_QF,
+            self::STAGE_SF,
+            self::STAGE_FINAL,
+            self::STAGE_THIRD,
+        ];
+    }
+
+    public function getStageLabel(): string
+    {
+        if ($this->stage === self::STAGE_GROUP) {
+            return 'Grupos';
+        }
+
+        return self::stageGroupName($this->stage);
     }
 
     public function getCreatedAt(): \DateTimeImmutable

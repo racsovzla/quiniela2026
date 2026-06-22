@@ -149,9 +149,40 @@ class FifaCalendarClient
      */
     public function teamCode(array $row, string $side): ?string
     {
-        $code = $row[$side]['Abbreviation'] ?? null;
+        $sideData = $row[$side] ?? null;
+        if (!is_array($sideData)) {
+            return null;
+        }
+
+        $code = $sideData['Abbreviation'] ?? null;
 
         return is_string($code) && $code !== '' ? strtoupper($code) : null;
+    }
+
+    /**
+     * True when FIFA has assigned real teams on both sides (no bracket placeholders).
+     *
+     * @param array<string, mixed> $row
+     */
+    public function hasBothTeamsConfirmed(array $row): bool
+    {
+        if ($this->teamPlaceholder($row, 'Home') !== null || $this->teamPlaceholder($row, 'Away') !== null) {
+            return false;
+        }
+
+        $homeCode = $this->teamCode($row, 'Home');
+        $awayCode = $this->teamCode($row, 'Away');
+
+        if ($homeCode === null || $awayCode === null) {
+            return false;
+        }
+
+        return $this->isRealTeamCode($homeCode) && $this->isRealTeamCode($awayCode);
+    }
+
+    public function isRealTeamCode(string $code): bool
+    {
+        return preg_match('/^[A-Z]{3}$/', strtoupper($code)) === 1;
     }
 
     /**

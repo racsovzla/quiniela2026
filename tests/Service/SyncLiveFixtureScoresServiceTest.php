@@ -9,8 +9,10 @@ use App\Entity\Prediction;
 use App\Repository\FixtureRepository;
 use App\Repository\UserRepository;
 use App\Repository\PredictionRepository;
+use App\Entity\TournamentGroup;
 use App\Service\FifaCalendarClient;
 use App\Service\CountryNameResolver;
+use App\Service\FifaFixtureDiscoveryService;
 use App\Service\WhatsAppMessageFormatter;
 use App\Service\WhatsAppService;
 use App\Service\SyncLiveFixtureScoresService;
@@ -232,7 +234,8 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         ?UserRepository $userRepository = null,
         ?PredictionRepository $predictionRepository = null,
         ?CountryNameResolver $countryNameResolver = null,
-        ?WhatsAppService $whatsAppService = null
+        ?WhatsAppService $whatsAppService = null,
+        ?FifaFixtureDiscoveryService $fifaFixtureDiscoveryService = null,
     ): SyncLiveFixtureScoresService {
         return new SyncLiveFixtureScoresService(
             $fixtureRepository,
@@ -243,7 +246,21 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
             $countryNameResolver ?? $this->createMock(CountryNameResolver::class),
             $whatsAppService ?? $this->createMock(WhatsAppService::class),
             new WhatsAppMessageFormatter(),
+            $fifaFixtureDiscoveryService ?? $this->createEmptyDiscoveryService(),
         );
+    }
+
+    private function createEmptyDiscoveryService(): FifaFixtureDiscoveryService
+    {
+        $discovery = $this->createMock(FifaFixtureDiscoveryService::class);
+        $discovery->method('importNewFixtures')->willReturn([
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'createdFixtures' => [],
+        ]);
+
+        return $discovery;
     }
 
     private function createFixture(string $homeCode, string $awayCode, \DateTimeImmutable $kickoffAt): Fixture
@@ -342,5 +359,108 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         );
 
         $service->syncLiveScores(new \DateTimeImmutable('2026-06-14 23:55:00', new \DateTimeZone('UTC')));
+    }
+
+    public function testSyncLiveScoresSendsWhatsAppWhenNewFixtureDiscovered(): void
+    {
+        $fixture = $this->createFixture('CIV', 'ECU', new \DateTimeImmutable('2026-06-14 23:00:00', new \DateTimeZone('UTC')));
+
+        $newFixture = $this->createFixture('ARG', 'BRA', new \DateTimeImmutable('2026-06-28 18:00:00', new \DateTimeZone('UTC')))
+            ->setStage(Fixture::STAGE_R32)
+            ->setGroup((new TournamentGroup())->setCode('r32')->setName('Dieciseisavos'));
+
+        $fixtureRepository = $this->createMock(FixtureRepository::class);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
+        $fixtureRepository->method('findNextScheduledFixture')->willReturn(null);
+
+        $fifaClient = $this->createMock(FifaCalendarClient::class);
+        $fifaClient->method('fetchAllMatches')->willReturn([
+            $this->fifaRow('CIV', 'ECU', 1, 0, 1),
+        ]);
+        $fifaClient->method('indexByTeamCodes')->willReturn(['CIV_ECU' => $this->fifaRow('CIV', 'ECU', 1, 0, 1)]);
+        $fifaClient->method('matchKey')->willReturn('CIV_ECU');
+        $fifaClient->method('extractScores')->willReturn(['home' => 1, 'away' => 0]);
+        $fifaClient->method('isFinished')->willReturn(true);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('persist');
+        $entityManager->method('flush');
+
+        $discovery = $this->createMock(FifaFixtureDiscoveryService::class);
+        $discovery->method('importNewFixtures')->willReturn([
+            'created' => 1,
+            'updated' => 0,
+            'skipped' => 0,
+            'createdFixtures' => [$newFixture],
+        ]);
+
+        $countryNameResolver = $this->createMock(CountryNameResolver::class);
+        $countryNameResolver->method('resolveSpanishName')->willReturnCallback(
+            static fn ($code, $name) => $code,
+        );
+
+        $whatsAppService = $this->createMock(WhatsAppService::class);
+        $whatsAppService
+            ->expects(self::once())
+            ->method('sendMessage')
+            ->with(self::callback(static function (string $message): bool {
+                return str_contains($message, 'Nuevo partido en quiniela')
+                    && str_contains($message, 'Dieciseisavos')
+                    && str_contains($message, '*ARG* vs *BRA*');
+            }));
+
+        $service = $this->createService(
+            $fixtureRepository,
+            $fifaClient,
+            $entityManager,
+            whatsAppService: $whatsAppService,
+            fifaFixtureDiscoveryService: $discovery,
+            countryNameResolver: $countryNameResolver,
+        );
+
+        $service->syncLiveScores(new \DateTimeImmutable('2026-06-14 23:55:00', new \DateTimeZone('UTC')));
+    }
+
+    public function testSyncLiveScoresDoesNotSendNewFixtureWhatsAppWhenDiscoveryEmpty(): void
+    {
+        $fixture = $this->createFixture('GER', 'CUW', new \DateTimeImmutable('2026-06-14 17:00:00', new \DateTimeZone('UTC')));
+
+        $fixtureRepository = $this->createMock(FixtureRepository::class);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
+        $fixtureRepository->method('findNextScheduledFixture')->willReturn(null);
+
+        $fifaClient = $this->createMock(FifaCalendarClient::class);
+        $fifaClient->method('fetchAllMatches')->willReturn([
+            $this->fifaRow('GER', 'CUW', 7, 1, 1),
+        ]);
+        $fifaClient->method('indexByTeamCodes')->willReturn(['GER_CUW' => $this->fifaRow('GER', 'CUW', 7, 1, 1)]);
+        $fifaClient->method('matchKey')->willReturn('GER_CUW');
+        $fifaClient->method('extractScores')->willReturn(['home' => 7, 'away' => 1]);
+        $fifaClient->method('isFinished')->willReturn(true);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('persist');
+        $entityManager->method('flush');
+
+        $discovery = $this->createMock(FifaFixtureDiscoveryService::class);
+        $discovery->expects(self::once())->method('importNewFixtures')->willReturn([
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'createdFixtures' => [],
+        ]);
+
+        $whatsAppService = $this->createMock(WhatsAppService::class);
+        $whatsAppService->expects(self::never())->method('sendMessage');
+
+        $service = $this->createService(
+            $fixtureRepository,
+            $fifaClient,
+            $entityManager,
+            whatsAppService: $whatsAppService,
+            fifaFixtureDiscoveryService: $discovery,
+        );
+
+        $service->syncLiveScores(new \DateTimeImmutable('2026-06-14 18:50:00', new \DateTimeZone('UTC')));
     }
 }

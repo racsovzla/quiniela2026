@@ -59,6 +59,10 @@
         {% if groups is empty %}
             <div class="alert alert-light border">No hay información de grupos disponible.</div>
         {% else %}
+            <p class="small text-body-secondary mb-3">
+                <span class="phases-team-status phases-team-status--qualified">Verde</span>: clasificado matemáticamente a dieciseisavos.
+                <span class="phases-team-status phases-team-status--eliminated">Rojo</span>: eliminado matemáticamente.
+            </p>
             <div class="row g-3">
                 {% for code, table in groups %}
                     <div class="col-12 col-lg-6 col-xl-4">
@@ -84,7 +88,11 @@
                                         {% for t in table %}
                                             <tr>
                                                 <td class="text-body-secondary">{{ loop.index }}</td>
-                                                <td>{{ t.code|flag_icon }} {{ t.code|country_name_es(t.code) }}</td>
+                                                <td>
+                                                    <span class="{% if t.status == 'qualified' %}phases-team-status phases-team-status--qualified{% elseif t.status == 'eliminated' %}phases-team-status phases-team-status--eliminated{% endif %}">
+                                                        {{ t.code|flag_icon }} {{ t.code|country_name_es(t.code) }}
+                                                    </span>
+                                                </td>
                                                 <td class="text-center">{{ t.pj }}</td>
                                                 <td class="text-center">{{ t.pg }}</td>
                                                 <td class="text-center">{{ t.pe }}</td>

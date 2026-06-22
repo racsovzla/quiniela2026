@@ -19,6 +19,7 @@ class SyncLiveFixtureScoresService
         private readonly CountryNameResolver $countryNameResolver,
         private readonly WhatsAppService $whatsAppService,
         private readonly WhatsAppMessageFormatter $whatsAppMessageFormatter,
+        private readonly FifaFixtureDiscoveryService $fifaFixtureDiscoveryService,
     ) {
     }
 
@@ -114,6 +115,7 @@ class SyncLiveFixtureScoresService
 
         if (!$dryRun && $stats['finished'] > 0) {
             $this->checkAndNotifyMissingPredictionsForNextFixture($nowUtc);
+            $this->discoverAndNotifyNewFixtures($dryRun);
         }
 
         return $stats;
@@ -153,6 +155,37 @@ class SyncLiveFixtureScoresService
                 $homeTeam,
                 $awayTeam,
                 $missingUsers,
+            );
+
+            $this->whatsAppService->sendMessage($message);
+        }
+    }
+
+    private function discoverAndNotifyNewFixtures(bool $dryRun): void
+    {
+        if ($dryRun) {
+            return;
+        }
+
+        $result = $this->fifaFixtureDiscoveryService->importNewFixtures();
+
+        foreach ($result['createdFixtures'] as $fixture) {
+            $homeTeam = $this->countryNameResolver->resolveSpanishName(
+                $fixture->getHomeTeam()?->getCode(),
+                $fixture->getHomeTeam()?->getName(),
+            );
+            $awayTeam = $this->countryNameResolver->resolveSpanishName(
+                $fixture->getAwayTeam()?->getCode(),
+                $fixture->getAwayTeam()?->getName(),
+            );
+
+            $phaseName = $fixture->getGroup()?->getName() ?? $fixture->getStageLabel();
+
+            $message = $this->whatsAppMessageFormatter->formatNewFixtureAvailable(
+                $phaseName,
+                $homeTeam,
+                $awayTeam,
+                $fixture->getKickoffAt(),
             );
 
             $this->whatsAppService->sendMessage($message);

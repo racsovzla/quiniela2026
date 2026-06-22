@@ -13,7 +13,7 @@ class TournamentGroupType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('code', TextType::class, ['help' => 'A-L'])
+            ->add('code', TextType::class, ['help' => 'A-L o fase: r32, r16, qf, sf, final, third'])
             ->add('name', TextType::class, ['help' => 'Ejemplo: Grupo A']);
     }
 
