@@ -715,3 +715,25 @@ input[type='password']::-ms-clear {
 .daypart-icon--madrugada { color: #8a8dff; }
 
 .daypart-legend .daypart-icon { margin-right: 0.3em; }
+
+/* Tablas de posiciones de grupos (página de fases): compactas para que las
+   10 columnas quepan dentro de la card sin scroll horizontal, incluso con
+   nombres largos como "Nueva Zelanda" o "Arabia Saudita". */
+.phases-panels .table {
+    font-size: 0.85rem;
+}
+
+.phases-panels .table th,
+.phases-panels .table td {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+}
+
+/* Las columnas numéricas se ajustan al contenido y dejan todo el espacio
+   sobrante para el nombre del equipo, que puede ajustarse en dos líneas si
+   hace falta en vez de desbordar la tabla. */
+.phases-panels .table th:not(:nth-child(2)),
+.phases-panels .table td:not(:nth-child(2)) {
+    width: 1%;
+    white-space: nowrap;
+}

@@ -30,9 +30,11 @@ const targets = [
 for (const { file, size, opaque } of targets) {
     let img = sharp(svg, { density: 384 }).resize(size, size);
     if (opaque) {
-        img = img.flatten({ background: '#0b3d1f' });
+        img = img.flatten({ background: '#0E1117' });
     }
-    await img.png().toFile(resolve(outDir, file));
+    // palette: true mantiene los PNG pequeños (Hugging Face rechaza binarios
+    // grandes en el push del Space). Para reducir aún más: pngquant.
+    await img.png({ palette: true, compressionLevel: 9 }).toFile(resolve(outDir, file));
     console.log(`✓ ${file} (${size}x${size})`);
 }
 

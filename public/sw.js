@@ -8,12 +8,12 @@
  *
  * Sube CACHE_VERSION al cambiar este archivo para invalidar el caché anterior.
  */
-const CACHE_VERSION = 'quiniela-v2';
+const CACHE_VERSION = 'quiniela-v3';
 const OFFLINE_URL = '/offline.html';
 const PRECACHE = [
     OFFLINE_URL,
-    '/img/icon-192.png',
-    '/img/icon-512.png',
+    '/img/icon-192.png?v=3',
+    '/img/icon-512.png?v=3',
 ];
 
 self.addEventListener('install', (event) => {

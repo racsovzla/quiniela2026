@@ -84,7 +84,7 @@
                                         {% for t in table %}
                                             <tr>
                                                 <td class="text-body-secondary">{{ loop.index }}</td>
-                                                <td class="text-nowrap">{{ t.code|flag_icon }} {{ t.code|country_name_es(t.code) }}</td>
+                                                <td>{{ t.code|flag_icon }} {{ t.code|country_name_es(t.code) }}</td>
                                                 <td class="text-center">{{ t.pj }}</td>
                                                 <td class="text-center">{{ t.pg }}</td>
                                                 <td class="text-center">{{ t.pe }}</td>

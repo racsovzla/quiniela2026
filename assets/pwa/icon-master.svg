@@ -1,36 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Icono de "Quiniela 2026" (arte original, sin marcas FIFA).
-  Estética inspirada en el Mundial 26: bloques de color diagonales
-  (morado / rojo / verde / lima) con un "26" tipográfico potente.
-  Contenido dentro de la zona segura central (~80%) para maskable.
+  Icono de "Quiniela 2026" (vectorial). Fuente unica de los iconos PWA.
+  Fondo con remolino de colores del Mundial 26 (morado / verde / rojo / lima)
+  con formas curvas y el wordmark tipografico "FIFA / QUINIELA 2026".
+  SVG plano para que se lea nitido en tamanos
+  pequenos (favicon, header). Contenido en la zona segura (~80%) para maskable.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
+    <clipPath id="round">
+      <rect x="0" y="0" width="512" height="512" rx="112" ry="112"/>
+    </clipPath>
+    <radialGradient id="textglow" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0"   stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="0.7" stop-color="#000000" stop-opacity="0.12"/>
+      <stop offset="1"   stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.72">
+      <stop offset="0.66" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1"    stop-color="#000000" stop-opacity="0.40"/>
+    </radialGradient>
     <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.30"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#000000" flood-opacity="0.40"/>
     </filter>
   </defs>
 
-  <!-- Base -->
-  <rect width="512" height="512" fill="#E4002B"/>
+  <g clip-path="url(#round)">
+    <!-- Base oscura -->
+    <rect width="512" height="512" fill="#0E1117"/>
 
-  <!-- Bloques de color en diagonal -->
-  <g transform="skewX(-14)">
-    <rect x="-120" y="-160" width="320" height="900" fill="#6A19E6"/>
-    <rect x="200"  y="-160" width="160" height="900" fill="#E4002B"/>
-    <rect x="360"  y="-160" width="64"  height="900" fill="#8E1326"/>
-    <rect x="424"  y="-160" width="110" height="900" fill="#00A94F"/>
-    <rect x="534"  y="-160" width="260" height="900" fill="#C6F000"/>
+    <!-- Remolino de colores del Mundial 26 con bordes curvos (circulos solapados) -->
+    <circle cx="150" cy="175" r="345" fill="#6A19E6"/> <!-- morado: arriba-izquierda -->
+    <circle cx="430" cy="120" r="300" fill="#00A94F"/> <!-- verde: arriba-derecha -->
+    <circle cx="495" cy="380" r="265" fill="#C6F000"/> <!-- lima: derecha-abajo -->
+    <circle cx="215" cy="505" r="370" fill="#E4002B"/> <!-- rojo: abajo y centro -->
+
+    <!-- Profundidad -->
+    <rect width="512" height="512" fill="url(#vignette)"/>
+    <ellipse cx="256" cy="216" rx="230" ry="210" fill="url(#textglow)"/>
+
+    <!-- Hero "FIFA" -->
+    <text x="256" y="288" text-anchor="middle" filter="url(#soft)"
+          font-family="'Arial Black', Helvetica, Arial, sans-serif" font-weight="900"
+          font-size="150" fill="#ffffff" letter-spacing="0">FIFA</text>
+
+    <!-- Wordmark -->
+    <text x="256" y="392" text-anchor="middle"
+          font-family="'Arial Black', Helvetica, Arial, sans-serif" font-weight="900"
+          font-size="52" fill="#ffffff" letter-spacing="4">QUINIELA</text>
+    <text x="256" y="446" text-anchor="middle"
+          font-family="'Arial Black', Helvetica, Arial, sans-serif" font-weight="900"
+          font-size="44" fill="#ffffff" letter-spacing="14" opacity="0.92">2026</text>
   </g>
-
-  <!-- Hero "26" -->
-  <text x="256" y="312" text-anchor="middle" filter="url(#soft)"
-        font-family="'Arial Black', Helvetica, Arial, sans-serif" font-weight="900"
-        font-size="250" fill="#ffffff" letter-spacing="-6">26</text>
-
-  <!-- Wordmark -->
-  <text x="256" y="402" text-anchor="middle"
-        font-family="'Arial Black', Helvetica, Arial, sans-serif" font-weight="900"
-        font-size="44" fill="#ffffff" letter-spacing="3">QUINIELA</text>
 </svg>

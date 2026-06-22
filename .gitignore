@@ -24,3 +24,10 @@
 /tools/hf-logs-mcp/node_modules/
 
 .idea/
+
+# macOS
+.DS_Store
+
+# Imagen fuente del icono (referencia de diseño, no se usa en runtime).
+# Se mantiene en local; el master vectorial vive en assets/pwa/icon-master.svg.
+/assets/icon-v2.png
