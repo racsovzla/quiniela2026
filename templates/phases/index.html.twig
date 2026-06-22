@@ -1,0 +1,143 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fases del torneo{% endblock %}
+
+{% macro kocard(m) %}
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                {% if m.kickoffIso %}
+                    <div class="small text-body-secondary mb-2">
+                        <span class="js-local-datetime" data-daypart data-utc="{{ m.kickoffIso }}">{{ m.kickoffIso }}</span>
+                    </div>
+                {% endif %}
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <span class="fw-semibold text-truncate">
+                        {% if m.home %}{{ m.home|flag_icon }} {{ m.home|country_name_es(m.home) }}{% else %}<span class="text-body-secondary">{{ m.homeLabel ?? 'Por definir' }}</span>{% endif %}
+                    </span>
+                    <span class="px-2 fw-bold text-nowrap">
+                        {% if m.finished and m.homeScore is not null %}{{ m.homeScore }} - {{ m.awayScore }}{% else %}vs{% endif %}
+                    </span>
+                    <span class="fw-semibold text-truncate text-end">
+                        {% if m.away %}{{ m.away|flag_icon }} {{ m.away|country_name_es(m.away) }}{% else %}<span class="text-body-secondary">{{ m.awayLabel ?? 'Por definir' }}</span>{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% block body %}
+{% import _self as ui %}
+{% set knockoutTabs = [
+    { key: 'r32', label: 'Dieciseisavos' },
+    { key: 'r16', label: 'Octavos' },
+    { key: 'qf', label: 'Cuartos' },
+    { key: 'sf', label: 'Semifinales' },
+    { key: 'final', label: 'Final' },
+] %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0">Fases del torneo</h1>
+    <small class="text-body-secondary">Datos oficiales en vivo (FIFA)</small>
+</div>
+
+{% if apiError %}
+    <div class="alert alert-warning">No se pudo cargar el calendario oficial en este momento. Inténtalo de nuevo en unos minutos.</div>
+{% endif %}
+
+<ul class="nav nav-pills flex-wrap gap-1 mb-3" id="phasesTabs" role="tablist">
+    <li class="nav-item"><button type="button" class="nav-link active" data-tab="grupos">Grupos</button></li>
+    {% for tab in knockoutTabs %}
+        <li class="nav-item"><button type="button" class="nav-link" data-tab="{{ tab.key }}">{{ tab.label }}</button></li>
+    {% endfor %}
+</ul>
+
+<div class="phases-panels">
+    {# ---- Grupos: tablas de posiciones ---- #}
+    <div data-tab-panel="grupos">
+        {% if groups is empty %}
+            <div class="alert alert-light border">No hay información de grupos disponible.</div>
+        {% else %}
+            <div class="row g-3">
+                {% for code, table in groups %}
+                    <div class="col-12 col-lg-6 col-xl-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header fw-semibold">Grupo {{ code }}</div>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr class="text-body-secondary small">
+                                            <th>#</th>
+                                            <th>Equipo</th>
+                                            <th class="text-center">PJ</th>
+                                            <th class="text-center">PG</th>
+                                            <th class="text-center">PE</th>
+                                            <th class="text-center">PP</th>
+                                            <th class="text-center">GF</th>
+                                            <th class="text-center">GC</th>
+                                            <th class="text-center">DG</th>
+                                            <th class="text-center">Pts</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for t in table %}
+                                            <tr>
+                                                <td class="text-body-secondary">{{ loop.index }}</td>
+                                                <td class="text-nowrap">{{ t.code|flag_icon }} {{ t.code|country_name_es(t.code) }}</td>
+                                                <td class="text-center">{{ t.pj }}</td>
+                                                <td class="text-center">{{ t.pg }}</td>
+                                                <td class="text-center">{{ t.pe }}</td>
+                                                <td class="text-center">{{ t.pp }}</td>
+                                                <td class="text-center">{{ t.gf }}</td>
+                                                <td class="text-center">{{ t.gc }}</td>
+                                                <td class="text-center">{{ t.dg > 0 ? '+' ~ t.dg : t.dg }}</td>
+                                                <td class="text-center fw-semibold">{{ t.pts }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {# ---- Eliminatorias ---- #}
+    {% for tab in knockoutTabs %}
+        {% set matches = knockout[tab.key] ?? [] %}
+        {% set thirdMatches = tab.key == 'final' ? (knockout.third ?? []) : [] %}
+        <div data-tab-panel="{{ tab.key }}" hidden>
+            {% if matches is empty and thirdMatches is empty %}
+                <div class="alert alert-light border text-center mb-0">Por definir tras la fase de grupos.</div>
+            {% else %}
+                <div class="row g-3">
+                    {% for m in matches %}{{ ui.kocard(m) }}{% endfor %}
+                </div>
+                {% if thirdMatches is not empty %}
+                    <h2 class="h6 text-body-secondary mt-4 mb-2">Tercer puesto</h2>
+                    <div class="row g-3">
+                        {% for m in thirdMatches %}{{ ui.kocard(m) }}{% endfor %}
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    (() => {
+        const tabs = document.querySelectorAll('#phasesTabs [data-tab]');
+        const panels = document.querySelectorAll('.phases-panels [data-tab-panel]');
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                const key = tab.dataset.tab;
+                tabs.forEach((t) => t.classList.toggle('active', t === tab));
+                panels.forEach((p) => { p.hidden = p.dataset.tabPanel !== key; });
+            });
+        });
+    })();
+</script>
+{% endblock %}
