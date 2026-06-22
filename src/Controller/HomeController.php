@@ -23,12 +23,6 @@ class HomeController extends AbstractController
      */
     private const FALLBACK_LIMIT = 8;
 
-    /**
-     * The "football day" runs from this local hour to the same hour next day, so
-     * after-midnight kickoffs stay grouped with the matchday they belong to.
-     */
-    private const MORNING_CUTOFF_HOUR = 8;
-
     #[Route('/', name: 'app_home', methods: ['GET'])]
     public function index(): Response
     {
@@ -95,11 +89,10 @@ class HomeController extends AbstractController
     }
 
     /**
-     * Returns [fixtures, isFallback, jornadaDate]. "Today" is the matchday in the user's
-     * timezone (IANA name sent as ?tz=), defined as the window [today 08:00, tomorrow
-     * 08:00) local: this keeps after-midnight kickoffs (madrugada) grouped with the day
-     * they belong to, so users don't miss loading their predictions. Falls back to
-     * upcoming fixtures if the window is empty.
+     * Returns [fixtures, isFallback, jornadaDate]. "Today" is the calendar day in the
+     * user's timezone (IANA name sent as ?tz=), from local 00:00 to 23:59:59. Each match
+     * belongs to the local day it falls on (after-midnight kickoffs included). Falls back
+     * to upcoming fixtures if the day is empty.
      *
      * @return array{0: list<Fixture>, 1: bool, 2: \DateTimeImmutable}
      */
@@ -109,14 +102,8 @@ class HomeController extends AbstractController
         \DateTimeImmutable $nowUtc,
     ): array {
         $tz = $this->resolveTimezone($request->query->get('tz'));
-        $nowLocal = $nowUtc->setTimezone($tz);
 
-        // Before the cutoff hour we are still inside the previous day's matchday.
-        $anchor = (int) $nowLocal->format('G') < self::MORNING_CUTOFF_HOUR
-            ? $nowLocal->modify('-1 day')
-            : $nowLocal;
-
-        $startLocal = $anchor->setTime(self::MORNING_CUTOFF_HOUR, 0, 0);
+        $startLocal = $nowUtc->setTimezone($tz)->setTime(0, 0, 0);
         $endLocal = $startLocal->modify('+1 day')->modify('-1 second');
 
         $utc = new \DateTimeZone('UTC');

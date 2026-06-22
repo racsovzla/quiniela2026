@@ -105,17 +105,16 @@ class HomeTodayMatchesTest extends WebTestCase
     }
 
     /**
-     * Returns a kickoff that is both in the past and inside the current matchday window
-     * ([today 08:00, tomorrow 08:00) in UTC, matching the controller for ?tz=UTC), so the
-     * fixture is never excluded when the suite runs shortly after 08:00 UTC.
+     * Returns a kickoff that is both in the past and inside the current calendar day
+     * ([today 00:00, tomorrow 00:00) in UTC, matching the controller for ?tz=UTC), so the
+     * fixture is never excluded when the suite runs shortly after midnight UTC.
      */
     private function kickoffWithinWindow(\DateTimeImmutable $now, string $offset): \DateTimeImmutable
     {
-        $anchor = (int) $now->format('G') < 8 ? $now->modify('-1 day') : $now;
-        $windowStart = $anchor->setTime(8, 0, 0);
+        $startOfDay = $now->setTime(0, 0, 0);
         $candidate = $now->modify($offset);
 
-        return $candidate < $windowStart ? $windowStart : $candidate;
+        return $candidate < $startOfDay ? $startOfDay : $candidate;
     }
 
     private function createUser(KernelBrowser $client, \DateTimeImmutable $paymentValidatedAt): User
