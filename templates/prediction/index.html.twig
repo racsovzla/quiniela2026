@@ -69,11 +69,6 @@
                 {% if fixture.status == 'finished' %}
                     <span class="badge text-bg-secondary">Finalizado</span>
                     <small class="d-block text-body-secondary mt-1">No se puede editar más.</small>
-                {% elseif fixture.status in ['postponed', 'suspended', 'rescheduled'] %}
-                    <span class="badge {{ fixture.statusBadgeClass }}">{{ fixture.statusLabel }}</span>
-                    {% if canEditFixture %}
-                        <small class="d-block text-body-secondary mt-1">Pronóstico editable.</small>
-                    {% endif %}
                 {% elseif canEditFixture %}
                     <span class="badge text-bg-success">Abierta</span>
                     <small class="d-block text-body-secondary mt-1 js-deadline-countdown" data-deadline="{{ fixtureDeadlineIso[fixture.id]|default('') }}"></small>

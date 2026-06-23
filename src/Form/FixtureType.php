@@ -59,9 +59,6 @@ class FixtureType extends AbstractType
             ->add('status', ChoiceType::class, [
                 'choices' => [
                     'Programado' => Fixture::STATUS_SCHEDULED,
-                    'Retrasado' => Fixture::STATUS_POSTPONED,
-                    'Suspendido' => Fixture::STATUS_SUSPENDED,
-                    'Reprogramado' => Fixture::STATUS_RESCHEDULED,
                     'Finalizado' => Fixture::STATUS_FINISHED,
                 ],
             ])

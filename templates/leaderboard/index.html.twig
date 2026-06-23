@@ -141,16 +141,20 @@
                                     {% for fixture in nextScheduled %}
                                         {% set kickoffTs = fixture.kickoffAt|date('U') %}
                                         {% set nowTs = 'now'|date('U') %}
-                                        {% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null and fixture.status != 'postponed' %}
-                                        {% set isInProgress = fixture.status in ['scheduled', 'rescheduled'] and (kickoffTs <= nowTs or hasLoadedScore) %}
+                                        {% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null %}
+                                        {% set isInProgress = fixture.status == 'scheduled' and (kickoffTs <= nowTs or hasLoadedScore) %}
                                         {% set isFinished = fixture.status == 'finished' %}
                                         <tr>
                                             <td class="fw-semibold team-cell team-cell-home">
                                                 {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
                                             </td>
                                             <td class="text-center fw-bold score-cell">
-                                                <small class="d-block mb-1">{% include 'leaderboard/_fixture_status_badges.html.twig' with {fixture: fixture} %}</small>
-                                                {% if hasLoadedScore and fixture.status != 'postponed' %}
+                                                {% if isFinished %}
+                                                    <small class="d-block mb-1"><span class="badge text-bg-secondary">Finalizado</span></small>
+                                                {% elseif isInProgress %}
+                                                    <small class="d-block mb-1"><span class="badge text-bg-info">En curso</span></small>
+                                                {% endif %}
+                                                {% if hasLoadedScore %}
                                                     {{ fixture.homeScore }} - {{ fixture.awayScore }}
                                                 {% else %}
                                                     &nbsp;
@@ -261,15 +265,20 @@
                                         {% for fixture in fixtures %}
                                             {% set kickoffTs = fixture.kickoffAt|date('U') %}
                                             {% set nowTs = 'now'|date('U') %}
-                                            {% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null and fixture.status != 'postponed' %}
+                                            {% set hasLoadedScore = fixture.homeScore is not null and fixture.awayScore is not null %}
+                                            {% set isInProgress = fixture.status == 'scheduled' and (kickoffTs <= nowTs or hasLoadedScore) %}
                                             {% set isFinished = fixture.status == 'finished' %}
                                             <tr>
                                                 <td class="fw-semibold team-cell team-cell-home">
                                                     {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }}
                                                 </td>
                                                 <td class="text-center fw-bold score-cell">
-                                                    <small class="d-block mb-1">{% include 'leaderboard/_fixture_status_badges.html.twig' with {fixture: fixture} %}</small>
-                                                    {% if hasLoadedScore and fixture.status != 'postponed' %}
+                                                    {% if isFinished %}
+                                                        <small class="d-block mb-1"><span class="badge text-bg-secondary">Finalizado</span></small>
+                                                    {% elseif isInProgress %}
+                                                        <small class="d-block mb-1"><span class="badge text-bg-info">En curso</span></small>
+                                                    {% endif %}
+                                                    {% if hasLoadedScore %}
                                                         {{ fixture.homeScore }} - {{ fixture.awayScore }}
                                                     {% else %}
                                                         &nbsp;

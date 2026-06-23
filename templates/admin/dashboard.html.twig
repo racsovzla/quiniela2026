@@ -138,7 +138,7 @@
                                 {% if fixture.status == 'finished' %}
                                     <span class="badge text-bg-secondary me-2">Finalizado</span>
                                 {% else %}
-                                    <span class="badge {{ fixture.statusBadgeClass }} me-2">{{ fixture.statusLabel }}</span>
+                                    <span class="badge text-bg-info me-2">Programado</span>
                                 {% endif %}
                                 {{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }} - <span class="js-local-datetime" data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span>
                             </span>

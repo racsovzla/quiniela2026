@@ -14,9 +14,6 @@ class Fixture
 {
     public const STATUS_SCHEDULED = 'scheduled';
     public const STATUS_FINISHED = 'finished';
-    public const STATUS_POSTPONED = 'postponed';
-    public const STATUS_SUSPENDED = 'suspended';
-    public const STATUS_RESCHEDULED = 'rescheduled';
 
     public const STAGE_GROUP = 'group';
     public const STAGE_R32 = 'r32';
@@ -335,111 +332,5 @@ class Fixture
     public function hasPredictionsEmailBeenSent(): bool
     {
         return $this->predictionsEmailSentAt !== null;
-    }
-
-    /**
-     * @return list<string>
-     */
-    public static function allStatuses(): array
-    {
-        return [
-            self::STATUS_SCHEDULED,
-            self::STATUS_FINISHED,
-            self::STATUS_POSTPONED,
-            self::STATUS_SUSPENDED,
-            self::STATUS_RESCHEDULED,
-        ];
-    }
-
-    /**
-     * Statuses that still count as an upcoming/active match (not finished).
-     *
-     * @return list<string>
-     */
-    public static function activeStatuses(): array
-    {
-        return [
-            self::STATUS_SCHEDULED,
-            self::STATUS_POSTPONED,
-            self::STATUS_SUSPENDED,
-            self::STATUS_RESCHEDULED,
-        ];
-    }
-
-    /**
-     * @return list<string>
-     */
-    public static function potentiallyLiveStatuses(): array
-    {
-        return [
-            self::STATUS_SCHEDULED,
-            self::STATUS_RESCHEDULED,
-        ];
-    }
-
-    public function isDelayed(): bool
-    {
-        return $this->status === self::STATUS_POSTPONED
-            || $this->status === self::STATUS_SUSPENDED;
-    }
-
-    public function isPotentiallyLive(): bool
-    {
-        return in_array($this->status, self::potentiallyLiveStatuses(), true);
-    }
-
-    public function isEditableAt(\DateTimeImmutable $nowUtc): bool
-    {
-        if ($this->status === self::STATUS_FINISHED) {
-            return false;
-        }
-
-        if ($this->isDelayed()) {
-            return true;
-        }
-
-        return $nowUtc < $this->getKickoffAt()->modify('-5 minutes');
-    }
-
-    public function getStatusLabel(): string
-    {
-        return match ($this->status) {
-            self::STATUS_FINISHED => 'Finalizado',
-            self::STATUS_POSTPONED => 'Retrasado',
-            self::STATUS_SUSPENDED => 'Suspendido',
-            self::STATUS_RESCHEDULED => 'Reprogramado',
-            default => 'Programado',
-        };
-    }
-
-    public function getStatusBadgeClass(): string
-    {
-        return match ($this->status) {
-            self::STATUS_FINISHED => 'text-bg-secondary',
-            self::STATUS_POSTPONED => 'text-bg-warning',
-            self::STATUS_SUSPENDED => 'text-bg-dark',
-            self::STATUS_RESCHEDULED => 'text-bg-info',
-            default => 'text-bg-primary',
-        };
-    }
-
-    public function clearPartialScores(): static
-    {
-        $this->homeScore = null;
-        $this->awayScore = null;
-        $this->penaltyHomeScore = null;
-        $this->penaltyAwayScore = null;
-
-        return $this;
-    }
-
-    public function applyRescheduleReset(\DateTimeImmutable $newKickoffAt): static
-    {
-        $this->kickoffAt = $newKickoffAt;
-        $this->status = self::STATUS_RESCHEDULED;
-        $this->predictionsEmailSentAt = null;
-        $this->clearPartialScores();
-
-        return $this;
     }
 }

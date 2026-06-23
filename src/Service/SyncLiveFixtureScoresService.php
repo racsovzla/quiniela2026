@@ -31,9 +31,7 @@ class SyncLiveFixtureScoresService
      *     finished: int,
      *     skipped: int,
      *     schedulesCreated: int,
-     *     schedulesUpdated: int,
-     *     postponed: int,
-     *     suspended: int
+     *     schedulesUpdated: int
      * }
      */
     public function syncLiveScores(?\DateTimeImmutable $nowUtc = null, bool $dryRun = false): array
@@ -42,99 +40,43 @@ class SyncLiveFixtureScoresService
 
         $discoveryStats = $this->fifaFixtureDiscoveryService->importNewFixtures($dryRun);
 
+        $fixtures = $this->fixtureRepository->findScheduledPotentiallyLive($nowUtc);
+
         $stats = [
-            'checked' => 0,
+            'checked' => count($fixtures),
             'matched' => 0,
             'updated' => 0,
             'finished' => 0,
             'skipped' => 0,
             'schedulesCreated' => $discoveryStats['created'],
             'schedulesUpdated' => $discoveryStats['updated'],
-            'postponed' => 0,
-            'suspended' => 0,
         ];
 
-        try {
-            $fifaRows = $this->fifaCalendarClient->fetchAllMatches();
-        } catch (\RuntimeException) {
+        if ($fixtures === []) {
             return $stats;
         }
 
+        $fifaRows = $this->fifaCalendarClient->fetchAllMatches();
         $fifaByKey = $this->fifaCalendarClient->indexByTeamCodes($fifaRows);
 
-        $overdueFixtures = $this->fixtureRepository->findOverdueForDelayCheck($nowUtc);
-        $stats['checked'] = count($overdueFixtures);
+        foreach ($fixtures as $fixture) {
+            $homeCode = $fixture->getHomeTeam()?->getCode();
+            $awayCode = $fixture->getAwayTeam()?->getCode();
 
-        foreach ($overdueFixtures as $fixture) {
-            $fifaRow = $this->matchFifaRow($fixture, $fifaByKey);
-            if (!is_array($fifaRow)) {
+            if (null === $homeCode || null === $awayCode) {
                 ++$stats['skipped'];
                 continue;
             }
 
-            if ($this->fifaCalendarClient->isFinished($fifaRow)) {
-                continue;
-            }
+            $key = $this->fifaCalendarClient->matchKey($homeCode, $awayCode);
+            $fifaRow = $fifaByKey[$key] ?? null;
 
-            if ($this->fifaCalendarClient->hasFutureKickoff($fifaRow, $nowUtc)) {
-                continue;
-            }
-
-            $delayStatus = $this->resolveDelayStatus($fixture, $fifaRow);
-            if ($delayStatus === null || $fixture->getStatus() === $delayStatus) {
-                continue;
-            }
-
-            if (!$dryRun) {
-                $fixture->setStatus($delayStatus);
-                if ($delayStatus === Fixture::STATUS_POSTPONED) {
-                    $fixture->clearPartialScores();
-                }
-                $this->entityManager->persist($fixture);
-            }
-
-            ++$stats['updated'];
-            if ($delayStatus === Fixture::STATUS_POSTPONED) {
-                ++$stats['postponed'];
-            } else {
-                ++$stats['suspended'];
-            }
-        }
-
-        $liveFixtures = $this->fixtureRepository->findScheduledPotentiallyLive($nowUtc);
-
-        foreach ($liveFixtures as $fixture) {
-            $fifaRow = $this->matchFifaRow($fixture, $fifaByKey);
             if (!is_array($fifaRow)) {
                 ++$stats['skipped'];
                 continue;
             }
 
             ++$stats['matched'];
-
-            if ($this->fifaCalendarClient->isPostponed($fifaRow)
-                || $this->fifaCalendarClient->hasFutureKickoff($fifaRow, $nowUtc)
-            ) {
-                if (!$dryRun && $fixture->getStatus() !== Fixture::STATUS_POSTPONED) {
-                    $fixture
-                        ->setStatus(Fixture::STATUS_POSTPONED)
-                        ->clearPartialScores();
-                    $this->entityManager->persist($fixture);
-                    ++$stats['updated'];
-                    ++$stats['postponed'];
-                }
-                continue;
-            }
-
-            if ($this->fifaCalendarClient->isSuspendedInPlay($fifaRow)) {
-                if (!$dryRun && $fixture->getStatus() !== Fixture::STATUS_SUSPENDED) {
-                    $fixture->setStatus(Fixture::STATUS_SUSPENDED);
-                    $this->entityManager->persist($fixture);
-                    ++$stats['updated'];
-                    ++$stats['suspended'];
-                }
-                continue;
-            }
 
             $scores = $this->fifaCalendarClient->extractScores($fifaRow);
             if (null === $scores) {
@@ -144,11 +86,7 @@ class SyncLiveFixtureScoresService
 
             $penaltyScores = $this->fifaCalendarClient->extractPenaltyScores($fifaRow);
             $shouldFinish = $this->fifaCalendarClient->isFinished($fifaRow);
-            $newStatus = $shouldFinish
-                ? Fixture::STATUS_FINISHED
-                : ($fixture->getStatus() === Fixture::STATUS_RESCHEDULED
-                    ? Fixture::STATUS_RESCHEDULED
-                    : Fixture::STATUS_SCHEDULED);
+            $newStatus = $shouldFinish ? Fixture::STATUS_FINISHED : Fixture::STATUS_SCHEDULED;
 
             $hasScoreChange = $fixture->getHomeScore() !== $scores['home']
                 || $fixture->getAwayScore() !== $scores['away'];
@@ -193,50 +131,6 @@ class SyncLiveFixtureScoresService
         }
 
         return $stats;
-    }
-
-    /**
-     * @param array<string, array<string, mixed>> $fifaByKey
-     *
-     * @return array<string, mixed>|null
-     */
-    private function matchFifaRow(Fixture $fixture, array $fifaByKey): ?array
-    {
-        $homeCode = $fixture->getHomeTeam()?->getCode();
-        $awayCode = $fixture->getAwayTeam()?->getCode();
-
-        if (null === $homeCode || null === $awayCode) {
-            return null;
-        }
-
-        $key = $this->fifaCalendarClient->matchKey($homeCode, $awayCode);
-
-        return $fifaByKey[$key] ?? null;
-    }
-
-    /**
-     * @param array<string, mixed> $fifaRow
-     */
-    private function resolveDelayStatus(Fixture $fixture, array $fifaRow): ?string
-    {
-        if ($this->fifaCalendarClient->isSuspendedInPlay($fifaRow)) {
-            return Fixture::STATUS_SUSPENDED;
-        }
-
-        if ($this->fifaCalendarClient->isPostponed($fifaRow)) {
-            return Fixture::STATUS_POSTPONED;
-        }
-
-        $scores = $this->fifaCalendarClient->extractScores($fifaRow);
-        if ($scores !== null && ($scores['home'] > 0 || $scores['away'] > 0)) {
-            return null;
-        }
-
-        if ($fixture->hasFinalScore() && ($fixture->getHomeScore() > 0 || $fixture->getAwayScore() > 0)) {
-            return Fixture::STATUS_SUSPENDED;
-        }
-
-        return Fixture::STATUS_POSTPONED;
     }
 
     private function checkAndNotifyMissingPredictionsForNextFixture(\DateTimeImmutable $nowUtc): void

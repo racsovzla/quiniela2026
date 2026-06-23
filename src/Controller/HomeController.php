@@ -150,55 +150,25 @@ class HomeController extends AbstractController
 
         foreach ($fixtures as $fixture) {
             $prediction = $predictionRepository->findOneByUserAndFixture($user, $fixture);
+            $hasScore = $fixture->hasFinalScore();
             $kickoff = $fixture->getKickoffAt();
             $finished = $fixture->getStatus() === Fixture::STATUS_FINISHED;
-            $hasScore = $fixture->hasFinalScore();
-            $isLive = !$finished
-                && !$fixture->isDelayed()
-                && $hasScore
-                && $kickoff <= $nowUtc;
+            $isLive = !$finished && $hasScore && $kickoff <= $nowUtc;
             $canEdit = $windowService->canEditAt($fixture, $nowUtc);
 
-            $statusNote = null;
-            $showScore = $hasScore;
+            $state = match (true) {
+                $finished => 'finished',
+                $isLive => 'live',
+                $canEdit => 'open',
+                default => 'closed',
+            };
 
-            if ($fixture->getStatus() === Fixture::STATUS_POSTPONED) {
-                $state = 'postponed';
-                $statusLabel = $fixture->getStatusLabel();
-                $statusClass = $fixture->getStatusBadgeClass();
-                $statusNote = 'Nueva fecha por confirmar';
-                $showScore = false;
-            } elseif ($fixture->getStatus() === Fixture::STATUS_SUSPENDED) {
-                $state = 'suspended';
-                $statusLabel = $fixture->getStatusLabel();
-                $statusClass = $fixture->getStatusBadgeClass();
-                $showScore = $hasScore;
-            } elseif ($fixture->getStatus() === Fixture::STATUS_RESCHEDULED && !$finished) {
-                $state = match (true) {
-                    $isLive => 'live',
-                    $canEdit => 'open',
-                    default => 'closed',
-                };
-                [$statusLabel, $statusClass] = match ($state) {
-                    'live' => ['EN VIVO', 'text-bg-danger'],
-                    'open', 'closed' => [$fixture->getStatusLabel(), $fixture->getStatusBadgeClass()],
-                };
-                $showScore = $isLive;
-            } else {
-                $state = match (true) {
-                    $finished => 'finished',
-                    $isLive => 'live',
-                    $canEdit => 'open',
-                    default => 'closed',
-                };
-
-                [$statusLabel, $statusClass] = match ($state) {
-                    'finished' => ['Finalizado', 'text-bg-secondary'],
-                    'live' => ['EN VIVO', 'text-bg-danger'],
-                    'open' => ['Abierta', 'text-bg-success'],
-                    default => ['Cerrada', 'text-bg-warning'],
-                };
-            }
+            [$statusLabel, $statusClass] = match ($state) {
+                'finished' => ['Finalizado', 'text-bg-secondary'],
+                'live' => ['EN VIVO', 'text-bg-danger'],
+                'open' => ['Abierta', 'text-bg-success'],
+                default => ['Cerrada', 'text-bg-warning'],
+            };
 
             $views[] = [
                 'id' => $fixture->getId(),
@@ -210,9 +180,8 @@ class HomeController extends AbstractController
                 'deadlineIso' => $windowService->deadline($fixture)->format('c'),
                 'statusLabel' => $statusLabel,
                 'statusClass' => $statusClass,
-                'statusNote' => $statusNote,
-                'scoreboardText' => $showScore ? $this->scoreboardText($fixture) : null,
-                ...$this->pointsView($fixture, $prediction, $state, $showScore, $paymentValidatedAt, $scoringService),
+                'scoreboardText' => $this->scoreboardText($fixture, $hasScore),
+                ...$this->pointsView($fixture, $prediction, $state, $hasScore, $paymentValidatedAt, $scoringService),
             ];
         }
 
@@ -230,7 +199,7 @@ class HomeController extends AbstractController
         ?\DateTimeImmutable $paymentValidatedAt,
         ScoringService $scoringService,
     ): array {
-        if ($state !== 'live' && $state !== 'finished' && $state !== 'suspended') {
+        if ($state !== 'live' && $state !== 'finished') {
             return ['pointsText' => null, 'pointsClass' => '', 'countsNote' => null];
         }
 
@@ -245,7 +214,7 @@ class HomeController extends AbstractController
             $pointsClass = 'text-success fw-semibold';
         } else {
             $pointsText = sprintf('⚡ Puntos provisionales: +%d (puede cambiar)', $points);
-            $pointsClass = $state === 'suspended' ? 'text-warning fw-semibold' : 'text-info fw-semibold';
+            $pointsClass = 'text-info fw-semibold';
         }
 
         $counts = $paymentValidatedAt !== null && $fixture->getKickoffAt() >= $paymentValidatedAt;
@@ -268,8 +237,12 @@ class HomeController extends AbstractController
         return $group?->getCode() ?? '-';
     }
 
-    private function scoreboardText(Fixture $fixture): string
+    private function scoreboardText(Fixture $fixture, bool $hasScore): ?string
     {
+        if (!$hasScore) {
+            return null;
+        }
+
         $text = sprintf('%d - %d', $fixture->getHomeScore(), $fixture->getAwayScore());
         if ($fixture->wentToPenalties()) {
             $text .= sprintf(' (%d - %d pen.)', $fixture->getPenaltyHomeScore(), $fixture->getPenaltyAwayScore());

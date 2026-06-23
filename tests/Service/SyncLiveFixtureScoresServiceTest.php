@@ -26,7 +26,10 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixture = $this->createFixture('CIV', 'ECU', new \DateTimeImmutable('2026-06-14 23:00:00', new \DateTimeZone('UTC')));
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [$fixture]);
+        $fixtureRepository
+            ->expects(self::once())
+            ->method('findScheduledPotentiallyLive')
+            ->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
         $fifaClient->method('fetchAllMatches')->willReturn([
@@ -38,9 +41,6 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fifaClient->method('matchKey')->willReturn('CIV_ECU');
         $fifaClient->method('extractScores')->willReturn(['home' => 1, 'away' => 0]);
         $fifaClient->method('isFinished')->willReturn(false);
-        $fifaClient->method('isPostponed')->willReturn(false);
-        $fifaClient->method('isSuspendedInPlay')->willReturn(false);
-        $fifaClient->method('hasFutureKickoff')->willReturn(false);
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('persist')->with($fixture);
@@ -69,7 +69,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
             ->setAwayScore(1);
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [$fixture]);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
         $fifaClient->method('fetchAllMatches')->willReturn([
@@ -107,7 +107,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
             ->setStatus(Fixture::STATUS_FINISHED);
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [$fixture]);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
         $fifaClient->method('fetchAllMatches')->willReturn([
@@ -139,7 +139,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixture = $this->createFixture('AAA', 'BBB', new \DateTimeImmutable('2026-06-14 17:00:00', new \DateTimeZone('UTC')));
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [], [$fixture]);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
         $fifaClient->method('fetchAllMatches')->willReturn([]);
@@ -156,7 +156,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
             new \DateTimeImmutable('2026-06-14 18:50:00', new \DateTimeZone('UTC')),
         );
 
-        self::assertSame(0, $stats['checked']);
+        self::assertSame(1, $stats['checked']);
         self::assertSame(0, $stats['matched']);
         self::assertSame(1, $stats['skipped']);
     }
@@ -166,7 +166,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixture = $this->createFixture('AUS', 'TUR', new \DateTimeImmutable('2026-06-14 04:00:00', new \DateTimeZone('UTC')));
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [$fixture]);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
         $fifaClient->method('fetchAllMatches')->willReturn([
@@ -201,7 +201,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixture = $this->createFixture('CIV', 'ECU', new \DateTimeImmutable('2026-06-14 23:00:00', new \DateTimeZone('UTC')));
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [], [$fixture]);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
         $fifaClient->method('fetchAllMatches')->willReturn([
@@ -213,9 +213,6 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fifaClient->method('matchKey')->willReturn('CIV_ECU');
         $fifaClient->method('extractScores')->willReturn(['home' => 0, 'away' => 0]);
         $fifaClient->method('isFinished')->willReturn(false);
-        $fifaClient->method('isPostponed')->willReturn(false);
-        $fifaClient->method('isSuspendedInPlay')->willReturn(false);
-        $fifaClient->method('hasFutureKickoff')->willReturn(false);
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::never())->method('persist');
@@ -223,84 +220,11 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
 
         $service = $this->createService($fixtureRepository, $fifaClient, $entityManager);
 
-        $stats = $service->syncLiveScores(
-            new \DateTimeImmutable('2026-06-14 23:45:00', new \DateTimeZone('UTC')),
-            dryRun: true,
-        );
+        $stats = $service->syncLiveScores(dryRun: true);
 
         self::assertSame(1, $stats['updated']);
         self::assertNull($fixture->getHomeScore());
         self::assertNull($fixture->getAwayScore());
-    }
-
-    public function testSyncLiveScoresMarksOverdueFixtureAsPostponed(): void
-    {
-        $fixture = $this->createFixture('FRA', 'IRQ', new \DateTimeImmutable('2026-06-22 18:00:00', new \DateTimeZone('UTC')));
-
-        $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [$fixture], []);
-
-        $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchAllMatches')->willReturn([
-            $this->fifaRow('FRA', 'IRQ', 0, 0, 0),
-        ]);
-        $fifaClient->method('indexByTeamCodes')->willReturnCallback(
-            static fn (array $rows): array => ['FRA_IRQ' => $rows[0]]
-        );
-        $fifaClient->method('matchKey')->willReturn('FRA_IRQ');
-        $fifaClient->method('isFinished')->willReturn(false);
-        $fifaClient->method('isPostponed')->willReturn(true);
-        $fifaClient->method('isSuspendedInPlay')->willReturn(false);
-        $fifaClient->method('hasFutureKickoff')->willReturn(false);
-        $fifaClient->method('extractScores')->willReturn(['home' => 0, 'away' => 0]);
-
-        $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->expects(self::once())->method('persist')->with($fixture);
-        $entityManager->expects(self::once())->method('flush');
-
-        $service = $this->createService($fixtureRepository, $fifaClient, $entityManager);
-
-        $stats = $service->syncLiveScores(
-            new \DateTimeImmutable('2026-06-22 20:00:00', new \DateTimeZone('UTC')),
-        );
-
-        self::assertSame(1, $stats['postponed']);
-        self::assertSame(Fixture::STATUS_POSTPONED, $fixture->getStatus());
-    }
-
-    public function testSyncLiveScoresAlwaysRunsFixtureDiscovery(): void
-    {
-        $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [], []);
-
-        $fifaClient = $this->createMock(FifaCalendarClient::class);
-        $fifaClient->method('fetchAllMatches')->willReturn([]);
-        $fifaClient->method('indexByTeamCodes')->willReturn([]);
-
-        $discovery = $this->createMock(FifaFixtureDiscoveryService::class);
-        $discovery->expects(self::once())->method('importNewFixtures')->willReturn([
-            'created' => 0,
-            'updated' => 0,
-            'skipped' => 0,
-            'createdFixtures' => [],
-        ]);
-
-        $service = $this->createService(
-            $fixtureRepository,
-            $fifaClient,
-            $this->createMock(EntityManagerInterface::class),
-            fifaFixtureDiscoveryService: $discovery,
-        );
-
-        $service->syncLiveScores();
-    }
-
-    private function mockFixtureQueries(FixtureRepository $fixtureRepository, array $overdueFixtures, ?array $liveFixtures = null): void
-    {
-        $liveFixtures ??= $overdueFixtures;
-
-        $fixtureRepository->method('findOverdueForDelayCheck')->willReturn($overdueFixtures);
-        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn($liveFixtures);
     }
 
     private function createService(
@@ -373,7 +297,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $nextFixture = $this->createFixture('ARG', 'BRA', new \DateTimeImmutable('2026-06-15 18:00:00', new \DateTimeZone('UTC')));
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [$fixture]);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
         // findNextScheduledFixture returns our next fixture
         $fixtureRepository->method('findNextScheduledFixture')->willReturn($nextFixture);
 
@@ -446,7 +370,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
             ->setGroup((new TournamentGroup())->setCode('r32')->setName('Dieciseisavos'));
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [$fixture]);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
         $fixtureRepository->method('findNextScheduledFixture')->willReturn(null);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
@@ -502,7 +426,7 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $fixture = $this->createFixture('GER', 'CUW', new \DateTimeImmutable('2026-06-14 17:00:00', new \DateTimeZone('UTC')));
 
         $fixtureRepository = $this->createMock(FixtureRepository::class);
-        $this->mockFixtureQueries($fixtureRepository, [$fixture]);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
         $fixtureRepository->method('findNextScheduledFixture')->willReturn(null);
 
         $fifaClient = $this->createMock(FifaCalendarClient::class);
@@ -538,5 +462,30 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         );
 
         $service->syncLiveScores(new \DateTimeImmutable('2026-06-14 18:50:00', new \DateTimeZone('UTC')));
+    }
+
+    public function testSyncLiveScoresAlwaysRunsFixtureDiscovery(): void
+    {
+        $fixtureRepository = $this->createMock(FixtureRepository::class);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([]);
+
+        $fifaClient = $this->createMock(FifaCalendarClient::class);
+
+        $discovery = $this->createMock(FifaFixtureDiscoveryService::class);
+        $discovery->expects(self::once())->method('importNewFixtures')->willReturn([
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'createdFixtures' => [],
+        ]);
+
+        $service = $this->createService(
+            $fixtureRepository,
+            $fifaClient,
+            $this->createMock(EntityManagerInterface::class),
+            fifaFixtureDiscoveryService: $discovery,
+        );
+
+        $service->syncLiveScores();
     }
 }

@@ -176,7 +176,6 @@ class FifaFixtureDiscoveryService
         }
 
         $changed = false;
-        $previousKickoff = $fixture->getKickoffAt();
 
         if ($fixture->getKickoffAt()->format('Y-m-d H:i:s') !== $kickoffAt->format('Y-m-d H:i:s')) {
             $nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
@@ -185,8 +184,15 @@ class FifaFixtureDiscoveryService
                 && $fixture->getStatus() !== Fixture::STATUS_FINISHED;
 
             if ($isFutureReschedule) {
-                $fixture->applyRescheduleReset($kickoffAt);
-                $this->logger->info('FifaFixtureDiscovery: fixture rescheduled.', [
+                $previousKickoff = $fixture->getKickoffAt();
+                $fixture
+                    ->setKickoffAt($kickoffAt)
+                    ->setPredictionsEmailSentAt(null)
+                    ->setHomeScore(null)
+                    ->setAwayScore(null)
+                    ->setPenaltyHomeScore(null)
+                    ->setPenaltyAwayScore(null);
+                $this->logger->info('FifaFixtureDiscovery: fixture kickoff rescheduled.', [
                     'home' => $homeCode,
                     'away' => $awayCode,
                     'fifaMatchId' => $fifaMatchId,

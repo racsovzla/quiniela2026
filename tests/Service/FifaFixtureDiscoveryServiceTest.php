@@ -157,7 +157,7 @@ class FifaFixtureDiscoveryServiceTest extends TestCase
         self::assertSame(1, $stats['skipped']);
     }
 
-    public function testReschedulesPostponedFixtureWithFutureKickoff(): void
+    public function testUpdatesKickoffWhenFifaDateChangesToFuture(): void
     {
         $home = (new Team())->setCode('FRA')->setName('France');
         $away = (new Team())->setCode('IRQ')->setName('Iraq');
@@ -169,10 +169,8 @@ class FifaFixtureDiscoveryServiceTest extends TestCase
             ->setGroup($group)
             ->setStage(Fixture::STAGE_GROUP)
             ->setKickoffAt(new \DateTimeImmutable('2026-06-22 18:00:00', new \DateTimeZone('UTC')))
-            ->setStatus(Fixture::STATUS_POSTPONED)
+            ->setStatus(Fixture::STATUS_SCHEDULED)
             ->setFifaMatchId('400021500')
-            ->setHomeScore(0)
-            ->setAwayScore(0)
             ->setPredictionsEmailSentAt(new \DateTimeImmutable('2026-06-22 17:00:00', new \DateTimeZone('UTC')));
 
         $row = [
@@ -210,8 +208,7 @@ class FifaFixtureDiscoveryServiceTest extends TestCase
 
         self::assertSame(0, $stats['created']);
         self::assertSame(1, $stats['updated']);
-        self::assertSame(Fixture::STATUS_RESCHEDULED, $existing->getStatus());
-        self::assertNull($existing->getHomeScore());
+        self::assertSame(Fixture::STATUS_SCHEDULED, $existing->getStatus());
         self::assertNull($existing->getPredictionsEmailSentAt());
     }
 
