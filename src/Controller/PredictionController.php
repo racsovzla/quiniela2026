@@ -6,6 +6,7 @@ use App\Entity\Fixture;
 use App\Entity\User;
 use App\Repository\FixtureRepository;
 use App\Repository\PredictionRepository;
+use App\Service\FixturePredictionViewService;
 use App\Service\PredictionSaveService;
 use App\Service\PredictionWindowService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,12 +24,13 @@ class PredictionController extends AbstractController
     public function index(
         FixtureRepository $fixtureRepository,
         PredictionRepository $predictionRepository,
-        PredictionWindowService $predictionWindowService,
+        FixturePredictionViewService $viewService,
     ): Response
     {
         /** @var User $user */
         $user = $this->getUser();
         $nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $paymentValidatedAt = $user->getPaymentValidatedAt();
 
         $fixtures = $fixtureRepository->findAllOrdered();
         $predictions = $predictionRepository->findByUserWithFixture($user);
@@ -41,8 +43,7 @@ class PredictionController extends AbstractController
             }
         }
 
-        $fixtureCanEdit = [];
-        $fixtureDeadlineIso = [];
+        $viewByFixture = [];
         $pendingCount = 0;
 
         foreach ($fixtures as $fixture) {
@@ -51,22 +52,20 @@ class PredictionController extends AbstractController
                 continue;
             }
 
-            $deadline = $predictionWindowService->deadline($fixture);
-            $canEdit = $predictionWindowService->canEditAt($fixture, $nowUtc);
-            $fixtureCanEdit[$fixtureId] = $canEdit;
-            $fixtureDeadlineIso[$fixtureId] = $deadline->format(DATE_ATOM);
+            $prediction = $predictionByFixture[$fixtureId] ?? null;
+            $view = $viewService->build($fixture, $prediction, $nowUtc, $paymentValidatedAt);
+            $viewByFixture[$fixtureId] = $view;
 
-            $hasPrediction = isset($predictionByFixture[$fixtureId])
-                && $predictionByFixture[$fixtureId]->isCompleteForFixture();
+            $hasPrediction = $prediction && $prediction->isCompleteForFixture();
 
-            if (!$hasPrediction && $canEdit) {
+            if (!$hasPrediction && $view['canEdit']) {
                 $pendingCount++;
             }
         }
 
-        usort($fixtures, function(Fixture $a, Fixture $b) use ($fixtureCanEdit) {
-            $aCanEdit = $fixtureCanEdit[$a->getId()] ?? false;
-            $bCanEdit = $fixtureCanEdit[$b->getId()] ?? false;
+        usort($fixtures, function(Fixture $a, Fixture $b) use ($viewByFixture) {
+            $aCanEdit = $viewByFixture[$a->getId()]['canEdit'] ?? false;
+            $bCanEdit = $viewByFixture[$b->getId()]['canEdit'] ?? false;
 
             if ($aCanEdit !== $bCanEdit) {
                 return $aCanEdit ? -1 : 1;
@@ -78,10 +77,9 @@ class PredictionController extends AbstractController
         return $this->render('prediction/index.html.twig', [
             'fixtures' => $fixtures,
             'predictionByFixture' => $predictionByFixture,
-            'fixtureCanEdit' => $fixtureCanEdit,
-            'fixtureDeadlineIso' => $fixtureDeadlineIso,
+            'viewByFixture' => $viewByFixture,
             'canParticipate' => $user->isVerified(),
-            'paymentValidatedAt' => $user->getPaymentValidatedAt(),
+            'paymentValidatedAt' => $paymentValidatedAt,
             'pendingCount' => $pendingCount,
         ]);
     }
