@@ -1,0 +1,19 @@
+{% set showPenaltiesInitially = fixture.knockout and p and p.predictedHomeScore == p.predictedAwayScore %}
+<form
+    method="post"
+    action="{{ path('admin_fixture_prediction_save', {id: fixture.id, userId: user.id}) }}"
+    class="admin-prediction-form d-flex flex-wrap align-items-center gap-2"
+    {% if fixture.knockout %}data-knockout="1"{% endif %}
+>
+    <input type="hidden" name="_token" value="{{ csrf_token('admin_prediction_' ~ fixture.id ~ '_' ~ user.id) }}">
+    <input type="number" min="0" inputmode="numeric" name="home" class="form-control form-control-sm prediction-score-input" style="width: 4rem;" value="{{ p ? p.predictedHomeScore : '' }}" placeholder="0" required>
+    <span>-</span>
+    <input type="number" min="0" inputmode="numeric" name="away" class="form-control form-control-sm prediction-score-input" style="width: 4rem;" value="{{ p ? p.predictedAwayScore : '' }}" placeholder="0" required>
+    <div class="penalty-inputs d-flex align-items-center gap-1{% if not showPenaltiesInitially %} d-none{% endif %}">
+        <span class="small text-body-secondary text-nowrap">Pen.:</span>
+        <input type="number" min="0" inputmode="numeric" name="penalty_home" class="form-control form-control-sm prediction-penalty-input" style="width: 3.5rem;" value="{{ p and p.predictedPenaltyHomeScore is not null ? p.predictedPenaltyHomeScore : '' }}" placeholder="0">
+        <span>-</span>
+        <input type="number" min="0" inputmode="numeric" name="penalty_away" class="form-control form-control-sm prediction-penalty-input" style="width: 3.5rem;" value="{{ p and p.predictedPenaltyAwayScore is not null ? p.predictedPenaltyAwayScore : '' }}" placeholder="0">
+    </div>
+    <button type="submit" class="btn btn-sm btn-primary">{{ p ? 'Actualizar' : 'Guardar' }}</button>
+</form>

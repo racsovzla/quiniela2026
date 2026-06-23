@@ -77,12 +77,13 @@
             </div>
         </div>
 
-        {% if predictions is defined %}
+        {% if predictions is defined and fixture is defined %}
             <div class="card shadow-sm border-0 rounded-3 mt-4">
                 <div class="card-header bg-dark text-white py-3">
-                    <h2 class="h5 mb-0 fw-semibold"><i class="bi bi-card-list me-2"></i>Predicciones de los Usuarios</h2>
+                    <h2 class="h5 mb-0 fw-semibold"><i class="bi bi-card-list me-2"></i>Pronósticos de los Usuarios</h2>
                 </div>
                 <div class="card-body p-4">
+                    <p class="text-body-secondary small">Como admin puedes editar o crear pronósticos sin importar si el partido ya finalizó.</p>
                     {% if predictions is not empty or missingUsers is not empty %}
                         <div class="row g-4">
                             <div class="col-md-6">
@@ -93,14 +94,20 @@
                                             <thead>
                                                 <tr>
                                                     <th>Participante</th>
-                                                    <th class="text-center">Predicción</th>
+                                                    <th>Pronóstico</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for prediction in predictions %}
                                                     <tr>
-                                                        <td>{{ prediction.user.name }}</td>
-                                                        <td class="text-center fw-bold text-primary">{{ prediction.predictedHomeScore }} - {{ prediction.predictedAwayScore }}</td>
+                                                        <td class="align-middle">{{ prediction.user.name }}</td>
+                                                        <td>
+                                                            {% include 'admin/_prediction_form.html.twig' with {
+                                                                fixture: fixture,
+                                                                user: prediction.user,
+                                                                p: prediction,
+                                                            } %}
+                                                        </td>
                                                     </tr>
                                                 {% endfor %}
                                             </tbody>
@@ -119,14 +126,20 @@
                                             <thead>
                                                 <tr>
                                                     <th>Participante</th>
-                                                    <th class="text-center">Estado</th>
+                                                    <th>Pronóstico</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in missingUsers %}
                                                     <tr>
-                                                        <td>{{ user.name }}</td>
-                                                        <td class="text-center"><span class="badge text-bg-warning">Pendiente</span></td>
+                                                        <td class="align-middle">{{ user.name }}</td>
+                                                        <td>
+                                                            {% include 'admin/_prediction_form.html.twig' with {
+                                                                fixture: fixture,
+                                                                user: user,
+                                                                p: null,
+                                                            } %}
+                                                        </td>
                                                     </tr>
                                                 {% endfor %}
                                             </tbody>
@@ -142,6 +155,23 @@
                     {% endif %}
                 </div>
             </div>
+            <script>
+                document.querySelectorAll('.admin-prediction-form').forEach((form) => {
+                    const togglePenalties = () => {
+                        const block = form.querySelector('.penalty-inputs');
+                        if (!block || form.dataset.knockout !== '1') return;
+                        const home = parseInt(form.querySelector('input[name="home"]')?.value ?? '', 10);
+                        const away = parseInt(form.querySelector('input[name="away"]')?.value ?? '', 10);
+                        const show = !Number.isNaN(home) && !Number.isNaN(away) && home === away;
+                        block.classList.toggle('d-none', !show);
+                        if (!show) block.querySelectorAll('input').forEach((i) => { i.value = ''; });
+                    };
+                    form.querySelectorAll('input[name="home"], input[name="away"]').forEach((input) => {
+                        input.addEventListener('input', togglePenalties);
+                    });
+                    togglePenalties();
+                });
+            </script>
         {% endif %}
     </div>
 </div>

@@ -15,6 +15,7 @@ use App\Repository\TeamRepository;
 use App\Repository\TournamentGroupRepository;
 use App\Repository\UserRepository;
 use App\Service\FixturePredictionEmailService;
+use App\Service\PredictionSaveService;
 use App\Service\SimulationService;
 use App\Service\TestNextFixturePredictionsWhatsAppService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -211,6 +212,7 @@ class AdminController extends AbstractController
 
                 return $this->render('admin/fixture_form.html.twig', [
                     'form' => $form,
+                    'fixture' => $fixture,
                     'predictions' => $predictions,
                     'missingUsers' => $missingUsers,
                 ]);
@@ -223,9 +225,54 @@ class AdminController extends AbstractController
 
         return $this->render('admin/fixture_form.html.twig', [
             'form' => $form,
+            'fixture' => $fixture,
             'predictions' => $predictions,
             'missingUsers' => $missingUsers,
         ]);
+    }
+
+    #[Route('/fixtures/{id}/predictions/{userId}', name: 'admin_fixture_prediction_save', methods: ['POST'])]
+    public function saveFixturePrediction(
+        Fixture $fixture,
+        int $userId,
+        Request $request,
+        UserRepository $userRepository,
+        PredictionSaveService $predictionSaveService,
+    ): RedirectResponse {
+        if (!$this->isCsrfTokenValid(
+            'admin_prediction_'.$fixture->getId().'_'.$userId,
+            (string) $request->request->get('_token'),
+        )) {
+            $this->addFlash('error', 'CSRF inválido.');
+
+            return $this->redirectToRoute('admin_fixture_edit', ['id' => $fixture->getId()]);
+        }
+
+        $user = $userRepository->find($userId);
+        if (!$user instanceof User || !$user->isApproved() || !$user->isVerified()) {
+            $this->addFlash('error', 'Usuario no válido para cargar pronósticos.');
+
+            return $this->redirectToRoute('admin_fixture_edit', ['id' => $fixture->getId()]);
+        }
+
+        $result = $predictionSaveService->save(
+            $user,
+            $fixture,
+            $request->request->get('home'),
+            $request->request->get('away'),
+            $request->request->get('penalty_home'),
+            $request->request->get('penalty_away'),
+        );
+
+        if (!$result['ok']) {
+            $this->addFlash('error', $result['error']);
+
+            return $this->redirectToRoute('admin_fixture_edit', ['id' => $fixture->getId()]);
+        }
+
+        $this->addFlash('success', sprintf('Pronóstico de %s guardado.', $user->getName()));
+
+        return $this->redirectToRoute('admin_fixture_edit', ['id' => $fixture->getId()]);
     }
 
     #[Route('/simulation/seed', name: 'admin_simulation_seed', methods: ['POST'])]

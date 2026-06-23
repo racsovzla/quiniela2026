@@ -3,12 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\Fixture;
-use App\Entity\Prediction;
 use App\Entity\User;
 use App\Repository\FixtureRepository;
 use App\Repository\PredictionRepository;
+use App\Service\PredictionSaveService;
 use App\Service\PredictionWindowService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -92,8 +91,7 @@ class PredictionController extends AbstractController
     public function save(
         Fixture $fixture,
         Request $request,
-        PredictionRepository $predictionRepository,
-        EntityManagerInterface $entityManager,
+        PredictionSaveService $predictionSaveService,
         PredictionWindowService $predictionWindowService,
     ): RedirectResponse|JsonResponse {
         /** @var User $user */
@@ -128,64 +126,23 @@ class PredictionController extends AbstractController
             return $this->redirectToRoute('app_predictions');
         }
 
-        $home = filter_var($request->request->get('home'), FILTER_VALIDATE_INT);
-        $away = filter_var($request->request->get('away'), FILTER_VALIDATE_INT);
+        $result = $predictionSaveService->save(
+            $user,
+            $fixture,
+            $request->request->get('home'),
+            $request->request->get('away'),
+            $request->request->get('penalty_home'),
+            $request->request->get('penalty_away'),
+        );
 
-        if ($home === false || $away === false || $home < 0 || $away < 0) {
+        if (!$result['ok']) {
             if ($isAjax) {
-                return new JsonResponse(['error' => 'Marcador inválido. Debe ser entero mayor o igual a 0.'], 422);
+                return new JsonResponse(['error' => $result['error']], 422);
             }
-            $this->addFlash('error', 'Marcador inválido. Debe ser entero mayor o igual a 0.');
+            $this->addFlash('error', $result['error']);
 
             return $this->redirectToRoute('app_predictions');
         }
-
-        $penaltyHome = null;
-        $penaltyAway = null;
-
-        if ($fixture->isKnockout() && $home === $away) {
-            $penaltyHomeRaw = filter_var($request->request->get('penalty_home'), FILTER_VALIDATE_INT);
-            $penaltyAwayRaw = filter_var($request->request->get('penalty_away'), FILTER_VALIDATE_INT);
-
-            if ($penaltyHomeRaw === false || $penaltyAwayRaw === false || $penaltyHomeRaw < 0 || $penaltyAwayRaw < 0) {
-                $message = 'En eliminatorias con empate debes indicar el marcador de penales.';
-                if ($isAjax) {
-                    return new JsonResponse(['error' => $message], 422);
-                }
-                $this->addFlash('error', $message);
-
-                return $this->redirectToRoute('app_predictions');
-            }
-
-            if ($penaltyHomeRaw === $penaltyAwayRaw) {
-                $message = 'Los penales deben tener un ganador (no puede ser empate).';
-                if ($isAjax) {
-                    return new JsonResponse(['error' => $message], 422);
-                }
-                $this->addFlash('error', $message);
-
-                return $this->redirectToRoute('app_predictions');
-            }
-
-            $penaltyHome = (int) $penaltyHomeRaw;
-            $penaltyAway = (int) $penaltyAwayRaw;
-        }
-
-        $prediction = $predictionRepository->findOneByUserAndFixture($user, $fixture);
-        if (!$prediction instanceof Prediction) {
-            $prediction = (new Prediction())
-                ->setUser($user)
-                ->setFixture($fixture);
-            $entityManager->persist($prediction);
-        }
-
-        $prediction
-            ->setPredictedHomeScore((int) $home)
-            ->setPredictedAwayScore((int) $away)
-            ->setPredictedPenaltyHomeScore($penaltyHome)
-            ->setPredictedPenaltyAwayScore($penaltyAway);
-
-        $entityManager->flush();
 
         if ($isAjax) {
             return new JsonResponse(['success' => true]);
