@@ -150,7 +150,7 @@ class HomeController extends AbstractController
                 'id' => $fixture->getId(),
                 'fixture' => $fixture,
                 'prediction' => $prediction,
-                'groupCode' => $this->groupCode($fixture),
+                'phaseLabel' => $this->phaseLabel($fixture),
                 ...$viewService->build($fixture, $prediction, $nowUtc, $paymentValidatedAt),
             ];
         }
@@ -158,15 +158,20 @@ class HomeController extends AbstractController
         return $views;
     }
 
-    private function groupCode(Fixture $fixture): string
+    /**
+     * Label shown in the card header: "Grupo A" for group-stage matches,
+     * or just the knockout stage name ("Octavos", "Dieciseisavos", …).
+     */
+    private function phaseLabel(Fixture $fixture): string
     {
         if ($fixture->isKnockout()) {
             return $fixture->getStageLabel();
         }
 
         $group = $fixture->getGroup() ?? $fixture->getHomeTeam()?->getGroup();
+        $code = $group?->getCode();
 
-        return $group?->getCode() ?? '-';
+        return $code !== null ? 'Grupo '.$code : '-';
     }
 
     private function scoreboardText(Fixture $fixture, bool $hasScore): ?string
