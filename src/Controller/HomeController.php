@@ -3,12 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Fixture;
-use App\Entity\Prediction;
 use App\Entity\User;
 use App\Repository\FixtureRepository;
 use App\Repository\PredictionRepository;
-use App\Service\PredictionWindowService;
-use App\Service\ScoringService;
+use App\Service\FixturePredictionViewService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -38,15 +36,14 @@ class HomeController extends AbstractController
         Request $request,
         FixtureRepository $fixtureRepository,
         PredictionRepository $predictionRepository,
-        PredictionWindowService $windowService,
-        ScoringService $scoringService,
+        FixturePredictionViewService $viewService,
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
         $nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
         [$fixtures, $isFallback, $jornadaDate] = $this->resolveFixtures($request, $fixtureRepository, $nowUtc);
-        $views = $this->buildViews($fixtures, $user, $nowUtc, $predictionRepository, $windowService, $scoringService);
+        $views = $this->buildViews($fixtures, $user, $nowUtc, $predictionRepository, $viewService);
 
         return $this->render('home/today_matches.html.twig', [
             'views' => $views,
@@ -66,15 +63,14 @@ class HomeController extends AbstractController
         Request $request,
         FixtureRepository $fixtureRepository,
         PredictionRepository $predictionRepository,
-        PredictionWindowService $windowService,
-        ScoringService $scoringService,
+        FixturePredictionViewService $viewService,
     ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
         $nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
         [$fixtures] = $this->resolveFixtures($request, $fixtureRepository, $nowUtc);
-        $views = $this->buildViews($fixtures, $user, $nowUtc, $predictionRepository, $windowService, $scoringService);
+        $views = $this->buildViews($fixtures, $user, $nowUtc, $predictionRepository, $viewService);
 
         $payload = array_map(static fn (array $v): array => [
             'id' => $v['id'],
@@ -142,46 +138,20 @@ class HomeController extends AbstractController
         User $user,
         \DateTimeImmutable $nowUtc,
         PredictionRepository $predictionRepository,
-        PredictionWindowService $windowService,
-        ScoringService $scoringService,
+        FixturePredictionViewService $viewService,
     ): array {
         $paymentValidatedAt = $user->getPaymentValidatedAt();
         $views = [];
 
         foreach ($fixtures as $fixture) {
             $prediction = $predictionRepository->findOneByUserAndFixture($user, $fixture);
-            $hasScore = $fixture->hasFinalScore();
-            $kickoff = $fixture->getKickoffAt();
-            $finished = $fixture->getStatus() === Fixture::STATUS_FINISHED;
-            $isLive = !$finished && $hasScore && $kickoff <= $nowUtc;
-            $canEdit = $windowService->canEditAt($fixture, $nowUtc);
-
-            $state = match (true) {
-                $finished => 'finished',
-                $isLive => 'live',
-                $canEdit => 'open',
-                default => 'closed',
-            };
-
-            [$statusLabel, $statusClass] = match ($state) {
-                'finished' => ['Finalizado', 'text-bg-secondary'],
-                'live' => ['EN VIVO', 'text-bg-danger'],
-                'open' => ['Abierta', 'text-bg-success'],
-                default => ['Cerrada', 'text-bg-warning'],
-            };
 
             $views[] = [
                 'id' => $fixture->getId(),
                 'fixture' => $fixture,
                 'prediction' => $prediction,
-                'groupCode' => $this->groupCode($fixture),
-                'state' => $state,
-                'canEdit' => $canEdit,
-                'deadlineIso' => $windowService->deadline($fixture)->format('c'),
-                'statusLabel' => $statusLabel,
-                'statusClass' => $statusClass,
-                'scoreboardText' => $this->scoreboardText($fixture, $hasScore),
-                ...$this->pointsView($fixture, $prediction, $state, $hasScore, $paymentValidatedAt, $scoringService),
+                'phaseLabel' => $this->phaseLabel($fixture),
+                ...$viewService->build($fixture, $prediction, $nowUtc, $paymentValidatedAt),
             ];
         }
 
@@ -189,52 +159,19 @@ class HomeController extends AbstractController
     }
 
     /**
-     * @return array{pointsText: ?string, pointsClass: string, countsNote: ?string}
+     * Label shown in the card header: "Grupo A" for group-stage matches,
+     * or just the knockout stage name ("Octavos", "Dieciseisavos", …).
      */
-    private function pointsView(
-        Fixture $fixture,
-        ?Prediction $prediction,
-        string $state,
-        bool $hasScore,
-        ?\DateTimeImmutable $paymentValidatedAt,
-        ScoringService $scoringService,
-    ): array {
-        if ($state !== 'live' && $state !== 'finished') {
-            return ['pointsText' => null, 'pointsClass' => '', 'countsNote' => null];
-        }
-
-        if (!$prediction || !$hasScore) {
-            return ['pointsText' => 'No cargaste predicción', 'pointsClass' => 'text-body-secondary', 'countsNote' => null];
-        }
-
-        $points = $scoringService->pointsForPrediction($prediction);
-
-        if ($state === 'finished') {
-            $pointsText = sprintf('🏆 Obtuviste: %d %s', $points, $points === 1 ? 'punto' : 'puntos');
-            $pointsClass = 'text-success fw-semibold';
-        } else {
-            $pointsText = sprintf('⚡ Puntos provisionales: +%d (puede cambiar)', $points);
-            $pointsClass = 'text-info fw-semibold';
-        }
-
-        $counts = $paymentValidatedAt !== null && $fixture->getKickoffAt() >= $paymentValidatedAt;
-
-        return [
-            'pointsText' => $pointsText,
-            'pointsClass' => $pointsClass,
-            'countsNote' => $counts ? null : 'No suma todavía: pago pendiente de validación.',
-        ];
-    }
-
-    private function groupCode(Fixture $fixture): string
+    private function phaseLabel(Fixture $fixture): string
     {
         if ($fixture->isKnockout()) {
             return $fixture->getStageLabel();
         }
 
         $group = $fixture->getGroup() ?? $fixture->getHomeTeam()?->getGroup();
+        $code = $group?->getCode();
 
-        return $group?->getCode() ?? '-';
+        return $code !== null ? 'Grupo '.$code : '-';
     }
 
     private function scoreboardText(Fixture $fixture, bool $hasScore): ?string

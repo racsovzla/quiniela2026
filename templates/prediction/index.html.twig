@@ -51,34 +51,48 @@
     <tbody>
     {% for fixture in fixtures %}
         {% set p = predictionByFixture[fixture.id] ?? null %}
-        {% set canEditFixture = fixtureCanEdit[fixture.id]|default(false) %}
-        {% set formDisabled = (not canParticipate) or (not canEditFixture) %}
+        {% set v = viewByFixture[fixture.id] %}
+        {% set canEditFixture = v.canEdit %}
+        {% set formDisabled = (not canParticipate) or (not v.canEdit) %}
         <tr>
             <td data-label="Fase">{{ fixture.knockout ? fixture.stageLabel : (fixture.group ? fixture.group.code : (fixture.homeTeam.group ? fixture.homeTeam.group.code : '-')) }}</td>
             <td data-label="Partido" class="predictions-table__match">{{ fixture.homeTeam.code|flag_icon }} {{ fixture.homeTeam.code|country_name_es(fixture.homeTeam.name) }} vs {{ fixture.awayTeam.code|flag_icon }} {{ fixture.awayTeam.code|country_name_es(fixture.awayTeam.name) }}</td>
             <td data-label="Inicio local"><span class="js-local-datetime" data-daypart data-utc="{{ fixture.kickoffAt|date('c') }}">{{ fixture.kickoffAt|date('Y-m-d H:i') }} UTC</span></td>
             <td data-label="Tu predicción">
-                {% include 'prediction/_form_fields.html.twig' with {
-                    fixture: fixture,
-                    p: p,
-                    formDisabled: formDisabled,
-                    canEditFixture: canEditFixture,
-                } %}
+                {% if formDisabled and not p %}
+                    {# No editable y sin pronóstico: evitamos los inputs vacíos que
+                       parecen un "0 - 0" cargado. No se guarda nada en BD. #}
+                    <span class="text-body-secondary fst-italic">Sin pronóstico</span>
+                {% else %}
+                    {% include 'prediction/_form_fields.html.twig' with {
+                        fixture: fixture,
+                        p: p,
+                        formDisabled: formDisabled,
+                        canEditFixture: canEditFixture,
+                    } %}
+                {% endif %}
+                {# Marcador real (final o en vivo) debajo de la predicción. #}
+                {% if v.scoreboardText %}
+                    <small class="d-block mt-1">Resultado: <span class="fw-semibold">{{ v.scoreboardText }}</span></small>
+                {% endif %}
             </td>
             <td class="predictions-table__status">
-                {% if fixture.status == 'finished' %}
-                    <span class="badge text-bg-secondary">Finalizado</span>
-                    <small class="d-block text-body-secondary mt-1">No se puede editar más.</small>
-                {% elseif canEditFixture %}
-                    <span class="badge text-bg-success">Abierta</span>
-                    <small class="d-block text-body-secondary mt-1 js-deadline-countdown" data-deadline="{{ fixtureDeadlineIso[fixture.id]|default('') }}"></small>
-                {% else %}
-                    <span class="badge text-bg-warning">Cerrada</span>
-                    {% if not canParticipate %}
-                        <small class="d-block text-body-secondary mt-1">Verifica tu correo para habilitarla.</small>
-                    {% else %}
-                        <small class="d-block text-body-secondary mt-1">Ya pasó el cierre de este partido.</small>
+                <span class="badge {{ v.statusClass }}">{{ v.statusLabel }}</span>
+
+                {# Puntos obtenidos, solo si el usuario pronosticó. #}
+                {% if p and v.pointsText %}
+                    <small class="d-block {{ v.pointsClass }}">{{ v.pointsText }}</small>
+                    {% if v.countsNote %}
+                        <small class="d-block text-body-secondary">{{ v.countsNote }}</small>
                     {% endif %}
+                {% endif %}
+
+                {% if v.state == 'open' %}
+                    <small class="d-block text-body-secondary mt-1 js-deadline-countdown" data-deadline="{{ v.deadlineIso }}"></small>
+                {% elseif v.state == 'closed' and not canParticipate %}
+                    <small class="d-block text-body-secondary mt-1">Verifica tu correo para habilitarla.</small>
+                {% elseif v.state == 'closed' %}
+                    <small class="d-block text-body-secondary mt-1">Ya pasó el cierre de este partido.</small>
                 {% endif %}
             </td>
         </tr>

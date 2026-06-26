@@ -294,6 +294,15 @@ main.container {
     text-align: center;
 }
 
+/* En partidos cerrados/finalizados el input va deshabilitado para mostrar el
+   pronóstico en solo lectura; forzamos texto oscuro para que sea legible
+   (WebKit ignora 'color' en inputs disabled, de ahí -webkit-text-fill-color). */
+.prediction-score-input:disabled {
+    color: #11202b;
+    -webkit-text-fill-color: #11202b;
+    opacity: 1;
+}
+
 .prediction-score-input::-webkit-outer-spin-button,
 .prediction-score-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
