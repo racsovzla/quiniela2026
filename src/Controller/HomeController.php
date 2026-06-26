@@ -155,6 +155,10 @@ class HomeController extends AbstractController
             ];
         }
 
+        // Partidos no finalizados primero; dentro de cada grupo se conserva el
+        // orden por kickoff ascendente (la entrada ya viene así y usort es estable).
+        usort($views, static fn (array $a, array $b): int => ($a['state'] === 'finished' ? 1 : 0) <=> ($b['state'] === 'finished' ? 1 : 0));
+
         return $views;
     }
 
