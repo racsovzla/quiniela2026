@@ -46,6 +46,23 @@
                         </div>
                     </div>
 
+                    <h5 class="border-bottom pb-2 mb-4 mt-5 text-secondary">Fase del torneo</h5>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            {{ form_row(form.stage, {
+                                'label': 'Fase',
+                                'attr': {'class': 'form-select', 'id': 'fixture_stage'}
+                            }) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.fifaMatchId, {
+                                'label': 'FIFA Match ID',
+                                'help': 'ID usado para sincronizar con FIFA',
+                                'attr': {'class': 'form-control'}
+                            }) }}
+                        </div>
+                    </div>
+
                     <h5 class="border-bottom pb-2 mb-4 mt-5 text-secondary">Estado y Resultado</h5>
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
@@ -57,12 +74,34 @@
                         <div class="col-md-4">
                             {{ form_row(form.homeScore, {
                                 'label': 'Goles Local',
-                                'attr': {'class': 'form-control text-center fs-4 fw-bold', 'placeholder': '-'}
+                                'attr': {'class': 'form-control text-center fs-4 fw-bold fixture-score-input', 'placeholder': '-'}
                             }) }}
                         </div>
                         <div class="col-md-4">
                             {{ form_row(form.awayScore, {
                                 'label': 'Goles Visitante',
+                                'attr': {'class': 'form-control text-center fs-4 fw-bold fixture-score-input', 'placeholder': '-'}
+                            }) }}
+                        </div>
+                    </div>
+
+                    {% set showFixturePenaltiesInitially = form.stage.vars.value != constant('App\\Entity\\Fixture::STAGE_GROUP')
+                        and form.homeScore.vars.value is not null
+                        and form.awayScore.vars.value is not null
+                        and form.homeScore.vars.value == form.awayScore.vars.value %}
+                    <div id="fixture-penalty-fields" class="row g-4 mb-4{% if not showFixturePenaltiesInitially %} d-none{% endif %}">
+                        <div class="col-md-4">
+                            <p class="form-text mb-0">Solo si el partido definió ganador por penales.</p>
+                        </div>
+                        <div class="col-md-4">
+                            {{ form_row(form.penaltyHomeScore, {
+                                'label': 'Penales local',
+                                'attr': {'class': 'form-control text-center fs-4 fw-bold', 'placeholder': '-'}
+                            }) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form_row(form.penaltyAwayScore, {
+                                'label': 'Penales visitante',
                                 'attr': {'class': 'form-control text-center fs-4 fw-bold', 'placeholder': '-'}
                             }) }}
                         </div>
@@ -73,9 +112,34 @@
                         <button type="submit" class="btn btn-primary px-5 fw-semibold">Guardar Partido</button>
                     </div>
 
-                {{ form_end(form) }}
+                {{ form_end(form, { render_rest: false }) }}
             </div>
         </div>
+        <script>
+            (() => {
+                const stageSelect = document.getElementById('fixture_stage');
+                const penaltyBlock = document.getElementById('fixture-penalty-fields');
+                if (!stageSelect || !penaltyBlock) return;
+
+                const groupStage = {{ constant('App\\Entity\\Fixture::STAGE_GROUP')|json_encode|raw }};
+                const scoreInputs = document.querySelectorAll('.fixture-score-input');
+
+                const toggleFixturePenalties = () => {
+                    const isKnockout = stageSelect.value !== groupStage;
+                    const home = parseInt(document.querySelector('#{{ form.homeScore.vars.id }}')?.value ?? '', 10);
+                    const away = parseInt(document.querySelector('#{{ form.awayScore.vars.id }}')?.value ?? '', 10);
+                    const show = isKnockout && !Number.isNaN(home) && !Number.isNaN(away) && home === away;
+                    penaltyBlock.classList.toggle('d-none', !show);
+                    if (!show) {
+                        penaltyBlock.querySelectorAll('input').forEach((input) => { input.value = ''; });
+                    }
+                };
+
+                stageSelect.addEventListener('change', toggleFixturePenalties);
+                scoreInputs.forEach((input) => input.addEventListener('input', toggleFixturePenalties));
+                toggleFixturePenalties();
+            })();
+        </script>
 
         {% if predictions is defined and fixture is defined %}
             <div class="card shadow-sm border-0 rounded-3 mt-4">
@@ -90,7 +154,7 @@
                                 <h3 class="h6 border-bottom pb-2 mb-3 text-secondary"><i class="bi bi-check-circle-fill text-success me-1"></i>Cargadas ({{ predictions|length }})</h3>
                                 {% if predictions is not empty %}
                                     <div class="table-responsive">
-                                        <table class="table table-sm align-middle table-hover mb-0">
+                                        <table class="table table-sm align-middle table-hover mb-0 admin-predictions-table">
                                             <thead>
                                                 <tr>
                                                     <th>Participante</th>
@@ -100,7 +164,9 @@
                                             <tbody>
                                                 {% for prediction in predictions %}
                                                     <tr>
-                                                        <td class="align-middle">{{ prediction.user.name }}</td>
+                                                        <td class="align-middle admin-predictions-table__participant">
+                                                            <span class="text-truncate d-inline-block" title="{{ prediction.user.name }}">{{ prediction.user.name }}</span>
+                                                        </td>
                                                         <td>
                                                             {% include 'admin/_prediction_form.html.twig' with {
                                                                 fixture: fixture,
@@ -122,7 +188,7 @@
                                 <h3 class="h6 border-bottom pb-2 mb-3 text-secondary"><i class="bi bi-exclamation-circle-fill text-warning me-1"></i>Pendientes ({{ missingUsers|length }})</h3>
                                 {% if missingUsers is not empty %}
                                     <div class="table-responsive">
-                                        <table class="table table-sm align-middle table-hover mb-0">
+                                        <table class="table table-sm align-middle table-hover mb-0 admin-predictions-table">
                                             <thead>
                                                 <tr>
                                                     <th>Participante</th>
@@ -132,7 +198,9 @@
                                             <tbody>
                                                 {% for user in missingUsers %}
                                                     <tr>
-                                                        <td class="align-middle">{{ user.name }}</td>
+                                                        <td class="align-middle admin-predictions-table__participant">
+                                                            <span class="text-truncate d-inline-block" title="{{ user.name }}">{{ user.name }}</span>
+                                                        </td>
                                                         <td>
                                                             {% include 'admin/_prediction_form.html.twig' with {
                                                                 fixture: fixture,

@@ -314,6 +314,52 @@ main.container {
     font-weight: 700;
 }
 
+.admin-prediction-form {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-prediction-form__inputs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-prediction-form__submit {
+    flex-shrink: 0;
+}
+
+.admin-predictions-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.admin-predictions-table th:first-child,
+.admin-predictions-table td:first-child {
+    width: 40%;
+}
+
+.admin-predictions-table th:last-child,
+.admin-predictions-table td:last-child {
+    width: 60%;
+}
+
+.admin-predictions-table__participant {
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 0;
+}
+
+.admin-predictions-table__participant .text-truncate {
+    max-width: 100%;
+    vertical-align: middle;
+}
+
 .list-group-item {
     padding-top: 0.7rem;
     padding-bottom: 0.7rem;
