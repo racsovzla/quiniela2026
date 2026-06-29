@@ -121,7 +121,7 @@ class FixturePredictionEmailService
         $summaryRows = [];
         foreach ($predictions as $prediction) {
             $user = $prediction->getUser();
-            if (!$user instanceof User) {
+            if (!$user instanceof User || !$user->isActive()) {
                 continue;
             }
 

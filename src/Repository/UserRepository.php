@@ -78,6 +78,7 @@ class UserRepository extends ServiceEntityRepository implements UserProviderInte
         return $this->createQueryBuilder('u')
             ->andWhere('u.isApproved = true')
             ->andWhere('u.isVerified = true')
+            ->andWhere('u.isActive = true')
             ->addOrderBy('u.name', 'ASC')
             ->getQuery()
             ->getResult();

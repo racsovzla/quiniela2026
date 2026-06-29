@@ -118,8 +118,25 @@ class AdminController extends AbstractController
 
         $user->setPaymentValidatedAt(new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
         $entityManager->flush();
+        $this->addFlash('success', 'Pago validado. El usuario ya sumará puntos.');
 
-        $this->addFlash('success', sprintf('Pago validado para %s.', $user->getEmail()));
+        return $this->redirectToRoute('admin_dashboard');
+    }
+
+    #[Route('/users/{id}/toggle-active', name: 'admin_user_toggle_active', methods: ['POST'])]
+    public function toggleUserActive(User $user, Request $request, EntityManagerInterface $entityManager): RedirectResponse
+    {
+        if (!$this->isCsrfTokenValid('toggle_active_'.$user->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'CSRF inválido.');
+
+            return $this->redirectToRoute('admin_dashboard');
+        }
+
+        $user->setIsActive(!$user->isActive());
+        $entityManager->flush();
+
+        $status = $user->isActive() ? 'activado (visible en rankings/correos)' : 'desactivado (pasivo)';
+        $this->addFlash('success', sprintf('Usuario %s correctamente.', $status));
 
         return $this->redirectToRoute('admin_dashboard');
     }

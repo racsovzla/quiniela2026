@@ -75,10 +75,11 @@ class ScoringService
         $streakClosed = [];
 
         foreach ($this->predictionRepository->findFinishedOrderedByUserAndKickoffDesc() as $prediction) {
-            $userId = $prediction->getUser()?->getId();
-            if (null === $userId) {
+            $user = $prediction->getUser();
+            if (null === $user || !$user->isActive()) {
                 continue;
             }
+            $userId = $user->getId();
 
             if (!isset($streaks[$userId])) {
                 $streaks[$userId] = 0;
@@ -291,10 +292,11 @@ class ScoringService
         $livePointsByUser = [];
 
         foreach ($this->predictionRepository->findInProgressWithLoadedScoresForLivePoints($nowUtc) as $prediction) {
-            $userId = $prediction->getUser()?->getId();
-            if (null === $userId) {
+            $user = $prediction->getUser();
+            if (null === $user || !$user->isActive()) {
                 continue;
             }
+            $userId = $user->getId();
 
             $livePointsByUser[$userId] = ($livePointsByUser[$userId] ?? 0) + $this->calculateLivePoints($prediction);
         }
@@ -313,7 +315,7 @@ class ScoringService
 
         foreach ($predictions as $prediction) {
             $user = $prediction->getUser();
-            if (!$user) {
+            if (!$user || !$user->isActive()) {
                 continue;
             }
 

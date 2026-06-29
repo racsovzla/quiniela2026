@@ -48,6 +48,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private bool $isApproved = false;
 
+    #[ORM\Column]
+    private bool $isActive = true;
+
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $emailVerificationCode = null;
 
@@ -287,6 +290,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         if ($this->predictions->removeElement($prediction) && $prediction->getUser() === $this) {
             $prediction->setUser(null);
         }
+
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
 
         return $this;
     }

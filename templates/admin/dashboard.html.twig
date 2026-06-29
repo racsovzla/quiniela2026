@@ -108,13 +108,28 @@
                                         <span class="badge text-bg-warning">Pago pendiente</span>
                                     {% endif %}
                                 </div>
+                                <div class="mt-1">
+                                    {% if user.isActive %}
+                                        <span class="badge text-bg-success">Activo (Visible)</span>
+                                    {% else %}
+                                        <span class="badge text-bg-secondary">Pasivo (Oculto)</span>
+                                    {% endif %}
+                                </div>
                             </div>
-                            {% if not user.paymentValidatedAt %}
-                                <form method="post" action="{{ path('admin_user_validate_payment', {id: user.id}) }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('validate_payment_' ~ user.id) }}">
-                                    <button class="btn btn-primary btn-sm">Validar pago</button>
+                            <div class="d-flex flex-column gap-1">
+                                {% if not user.paymentValidatedAt %}
+                                    <form method="post" action="{{ path('admin_user_validate_payment', {id: user.id}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('validate_payment_' ~ user.id) }}">
+                                        <button class="btn btn-primary btn-sm w-100">Validar pago</button>
+                                    </form>
+                                {% endif %}
+                                <form method="post" action="{{ path('admin_user_toggle_active', {id: user.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('toggle_active_' ~ user.id) }}">
+                                    <button class="btn btn-outline-secondary btn-sm w-100">
+                                        {% if user.isActive %}Desactivar (Pasivo){% else %}Activar (Visible){% endif %}
+                                    </button>
                                 </form>
-                            {% endif %}
+                            </div>
                         </li>
                     {% else %}
                         <li class="list-group-item">No hay usuarios aprobados.</li>

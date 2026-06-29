@@ -66,6 +66,10 @@ class TestNextFixturePredictionsWhatsAppService
         $result['fixture'] = $fixture;
 
         $predictions = $this->predictionRepository->findByFixtureWithUser($fixture);
+        $predictions = array_values(array_filter(
+            $predictions,
+            static fn (\App\Entity\Prediction $p): bool => $p->getUser()?->isActive() ?? false
+        ));
         $result['predictionCount'] = count($predictions);
         if ($predictions === []) {
             $result['error'] = 'El próximo partido no tiene pronósticos registrados.';

@@ -63,6 +63,9 @@ class AuditUserPointsCommand extends Command
             'Pago validado: %s',
             $user->getPaymentValidatedAt()?->format('Y-m-d H:i:s T') ?? 'NO',
         ));
+        if (!$user->isActive()) {
+            $io->warning('El usuario está marcado como PASIVO. No aparece en el leaderboard público.');
+        }
 
         $auditFixtures = $this->fixtureRepository->findFinishedOrdered();
         $auditSum = 0;
