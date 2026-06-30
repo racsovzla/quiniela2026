@@ -464,6 +464,51 @@ class SyncLiveFixtureScoresServiceTest extends TestCase
         $service->syncLiveScores(new \DateTimeImmutable('2026-06-14 18:50:00', new \DateTimeZone('UTC')));
     }
 
+    public function testSyncLiveScoresKeepsPenaltyShootoutInProgress(): void
+    {
+        $fixture = $this->createFixture('NED', 'MAR', new \DateTimeImmutable('2026-06-30 19:00:00', new \DateTimeZone('UTC')))
+            ->setHomeScore(1)
+            ->setAwayScore(1);
+
+        $fixtureRepository = $this->createMock(FixtureRepository::class);
+        $fixtureRepository->method('findScheduledPotentiallyLive')->willReturn([$fixture]);
+
+        $fifaRow = [
+            'Home' => ['Abbreviation' => 'NED'],
+            'Away' => ['Abbreviation' => 'MAR'],
+            'HomeTeamScore' => 1,
+            'AwayTeamScore' => 1,
+            'HomeTeamPenaltyScore' => 2,
+            'AwayTeamPenaltyScore' => 1,
+            'ResultType' => 0,
+            'MatchStatus' => 3,
+        ];
+
+        $fifaClient = $this->createMock(FifaCalendarClient::class);
+        $fifaClient->method('fetchAllMatches')->willReturn([$fifaRow]);
+        $fifaClient->method('indexByTeamCodes')->willReturn(['NED_MAR' => $fifaRow]);
+        $fifaClient->method('matchKey')->willReturn('NED_MAR');
+        $fifaClient->method('extractScores')->willReturn(['home' => 1, 'away' => 1]);
+        $fifaClient->method('extractPenaltyScores')->willReturn(['home' => 2, 'away' => 1]);
+        $fifaClient->method('isFinished')->willReturn(false);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('persist')->with($fixture);
+        $entityManager->expects(self::once())->method('flush');
+
+        $service = $this->createService($fixtureRepository, $fifaClient, $entityManager);
+
+        $stats = $service->syncLiveScores(
+            new \DateTimeImmutable('2026-06-30 22:00:00', new \DateTimeZone('UTC')),
+        );
+
+        self::assertSame(1, $stats['updated']);
+        self::assertSame(0, $stats['finished']);
+        self::assertSame(Fixture::STATUS_SCHEDULED, $fixture->getStatus());
+        self::assertSame(2, $fixture->getPenaltyHomeScore());
+        self::assertSame(1, $fixture->getPenaltyAwayScore());
+    }
+
     public function testSyncLiveScoresFinalizesPenaltyShootoutFixture(): void
     {
         $fixture = $this->createFixture('GER', 'PAR', new \DateTimeImmutable('2026-06-29 19:00:00', new \DateTimeZone('UTC')))

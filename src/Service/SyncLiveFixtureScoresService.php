@@ -85,8 +85,7 @@ class SyncLiveFixtureScoresService
             }
 
             $penaltyScores = $this->fifaCalendarClient->extractPenaltyScores($fifaRow);
-            $shouldFinish = $this->fifaCalendarClient->isFinished($fifaRow)
-                || $penaltyScores !== null;
+            $shouldFinish = $this->fifaCalendarClient->isFinished($fifaRow);
             $newStatus = $shouldFinish ? Fixture::STATUS_FINISHED : Fixture::STATUS_SCHEDULED;
 
             $hasScoreChange = $fixture->getHomeScore() !== $scores['home']

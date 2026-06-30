@@ -77,4 +77,17 @@ class FifaCalendarClientTest extends TestCase
     {
         self::assertFalse($this->client->isFinished(['ResultType' => 0]));
     }
+
+    public function testIsFinishedIsFalseDuringLivePenaltyShootout(): void
+    {
+        $row = [
+            'ResultType' => 0,
+            'HomeTeamPenaltyScore' => 1,
+            'AwayTeamPenaltyScore' => 0,
+            'MatchStatus' => 3,
+        ];
+
+        self::assertFalse($this->client->isFinished($row));
+        self::assertTrue($this->client->isPenaltyShootoutInProgress($row));
+    }
 }
