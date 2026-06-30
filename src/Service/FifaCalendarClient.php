@@ -210,11 +210,15 @@ class FifaCalendarClient
     }
 
     /**
+     * FIFA ResultType: 0 = not finished, 1 = full time, 2 = decided on penalties.
+     *
      * @param array<string, mixed> $row
      */
     public function isFinished(array $row): bool
     {
-        return ($row['ResultType'] ?? null) === 1;
+        $resultType = $row['ResultType'] ?? null;
+
+        return $resultType === 1 || $resultType === 2;
     }
 
     /**

@@ -84,7 +84,7 @@ class TournamentStandingsService
      *
      * @param list<array<string, mixed>> $rows
      *
-     * @return array<string, list<array{home: ?string, away: ?string, homeLabel: ?string, awayLabel: ?string, homeScore: ?int, awayScore: ?int, finished: bool, kickoffIso: ?string}>>
+     * @return array<string, list<array{home: ?string, away: ?string, homeLabel: ?string, awayLabel: ?string, homeScore: ?int, awayScore: ?int, penaltyHomeScore: ?int, penaltyAwayScore: ?int, finished: bool, kickoffIso: ?string}>>
      */
     public function matchesByStage(array $rows): array
     {
@@ -97,6 +97,7 @@ class TournamentStandingsService
             }
 
             $scores = $this->client->extractScores($row);
+            $penalties = $this->client->extractPenaltyScores($row);
 
             $knockout[$stage][] = [
                 'home' => $this->client->teamCode($row, 'Home'),
@@ -105,6 +106,8 @@ class TournamentStandingsService
                 'awayLabel' => $this->client->teamPlaceholder($row, 'Away'),
                 'homeScore' => $scores['home'] ?? null,
                 'awayScore' => $scores['away'] ?? null,
+                'penaltyHomeScore' => $penalties['home'] ?? null,
+                'penaltyAwayScore' => $penalties['away'] ?? null,
                 'finished' => $this->client->isFinished($row),
                 'kickoffIso' => $this->client->kickoffIso($row),
             ];

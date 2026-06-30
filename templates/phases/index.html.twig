@@ -16,7 +16,9 @@
                         {% if m.home %}{{ m.home|flag_icon }} {{ m.home|country_name_es(m.home) }}{% else %}<span class="text-body-secondary">{{ m.homeLabel ?? 'Por definir' }}</span>{% endif %}
                     </span>
                     <span class="px-2 fw-bold text-nowrap">
-                        {% if m.finished and m.homeScore is not null %}{{ m.homeScore }} - {{ m.awayScore }}{% else %}vs{% endif %}
+                        {% if m.finished and m.homeScore is not null %}
+                            {{ m.homeScore }} - {{ m.awayScore }}{% if m.penaltyHomeScore is not null and m.penaltyAwayScore is not null %} ({{ m.penaltyHomeScore }} - {{ m.penaltyAwayScore }} pen.){% endif %}
+                        {% else %}vs{% endif %}
                     </span>
                     <span class="fw-semibold text-truncate text-end">
                         {% if m.away %}{{ m.away|flag_icon }} {{ m.away|country_name_es(m.away) }}{% else %}<span class="text-body-secondary">{{ m.awayLabel ?? 'Por definir' }}</span>{% endif %}

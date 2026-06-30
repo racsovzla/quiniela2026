@@ -235,6 +235,13 @@ class AdminController extends AbstractController
                 ]);
             }
 
+            if (
+                $fixture->wentToPenalties()
+                && $fixture->getHomeScore() === $fixture->getAwayScore()
+            ) {
+                $fixture->setStatus(Fixture::STATUS_FINISHED);
+            }
+
             $entityManager->flush();
 
             return $this->redirectToRoute('admin_dashboard');

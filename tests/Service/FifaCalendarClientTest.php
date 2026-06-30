@@ -56,4 +56,25 @@ class FifaCalendarClientTest extends TestCase
 
         self::assertFalse($this->client->hasBothTeamsConfirmed($row));
     }
+
+    public function testIsFinishedForFullTimeResult(): void
+    {
+        self::assertTrue($this->client->isFinished(['ResultType' => 1]));
+    }
+
+    public function testIsFinishedForPenaltyShootout(): void
+    {
+        self::assertTrue($this->client->isFinished([
+            'ResultType' => 2,
+            'HomeTeamScore' => 1,
+            'AwayTeamScore' => 1,
+            'HomeTeamPenaltyScore' => 3,
+            'AwayTeamPenaltyScore' => 4,
+        ]));
+    }
+
+    public function testIsFinishedIsFalseWhenNotPlayed(): void
+    {
+        self::assertFalse($this->client->isFinished(['ResultType' => 0]));
+    }
 }

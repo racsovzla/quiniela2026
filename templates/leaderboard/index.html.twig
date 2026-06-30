@@ -156,6 +156,9 @@
                                                 {% endif %}
                                                 {% if hasLoadedScore %}
                                                     {{ fixture.homeScore }} - {{ fixture.awayScore }}
+                                                    {% if fixture.wentToPenalties %}
+                                                        <small class="d-block text-body-secondary fw-normal">({{ fixture.penaltyHomeScore }} - {{ fixture.penaltyAwayScore }} pen.)</small>
+                                                    {% endif %}
                                                 {% else %}
                                                     &nbsp;
                                                 {% endif %}
@@ -209,6 +212,9 @@
                                                 {% endif %}
                                                 {% if hasLoadedScore %}
                                                     {{ fixture.homeScore }} - {{ fixture.awayScore }}
+                                                    {% if fixture.wentToPenalties %}
+                                                        <small class="d-block text-body-secondary fw-normal">({{ fixture.penaltyHomeScore }} - {{ fixture.penaltyAwayScore }} pen.)</small>
+                                                    {% endif %}
                                                 {% else %}
                                                     &nbsp;
                                                 {% endif %}
@@ -280,6 +286,9 @@
                                                     {% endif %}
                                                     {% if hasLoadedScore %}
                                                         {{ fixture.homeScore }} - {{ fixture.awayScore }}
+                                                        {% if fixture.wentToPenalties %}
+                                                            <small class="d-block text-body-secondary fw-normal">({{ fixture.penaltyHomeScore }} - {{ fixture.penaltyAwayScore }} pen.)</small>
+                                                        {% endif %}
                                                     {% else %}
                                                         &nbsp;
                                                     {% endif %}
