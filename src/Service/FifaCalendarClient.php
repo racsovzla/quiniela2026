@@ -210,7 +210,11 @@ class FifaCalendarClient
     }
 
     /**
-     * FIFA ResultType: 0 = in progress (including live penalty shootout), 1 = full time, 2 = decided on penalties.
+     * FIFA ResultType:
+     * 0 = not finished (scheduled or in progress, including live penalty shootout)
+     * 1 = full time
+     * 2 = decided on penalties
+     * 3 = decided after extra time
      * Penalty scores alone do not mean finished — during shootouts ResultType stays 0 until the round ends.
      *
      * @param array<string, mixed> $row
@@ -219,7 +223,7 @@ class FifaCalendarClient
     {
         $resultType = $row['ResultType'] ?? null;
 
-        return $resultType === 1 || $resultType === 2;
+        return $resultType === 1 || $resultType === 2 || $resultType === 3;
     }
 
     /**

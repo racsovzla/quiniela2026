@@ -1,10 +1,8 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
-
-        # IMPORTANT: You MUST configure your server version,
-        # either here or in the DATABASE_URL env var (see .env file)
-        #server_version: '16'
+        # Neon/pooler often returns empty platform version to DBAL in CLI.
+        server_version: '17.0.0'
 
         profiling_collect_backtrace: '%kernel.debug%'
     orm:
@@ -29,9 +27,6 @@ when@prod:
     doctrine:
         dbal:
             driver: pdo_pgsql
-            # Managed PostgreSQL may return an empty platform version to DBAL during CLI bootstrap.
-            # Pinning server version avoids InvalidPlatformVersion("") in migrations.
-            server_version: '17.0.0'
         orm:
             query_cache_driver:
                 type: pool

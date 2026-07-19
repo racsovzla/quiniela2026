@@ -21,13 +21,14 @@ class TournamentMatchBudgetServiceTest extends TestCase
         );
 
         $budget = $service->fromFifaRows([
-            $this->match('group', true),
-            $this->match('group', false),
-            $this->match('r16', false),
-            $this->match('final', true),
+            $this->match('group', true, 1),
+            $this->match('group', false, 0),
+            $this->match('r16', false, 0),
+            $this->match('final', true, 1),
+            $this->match('qf', true, 3),
         ]);
 
-        self::assertSame(4, $budget['total']);
+        self::assertSame(5, $budget['total']);
         self::assertSame(2, $budget['remaining']);
         self::assertSame(9, $budget['maxPoints']);
         self::assertSame(2, $budget['maxExactHits']);
@@ -56,11 +57,12 @@ class TournamentMatchBudgetServiceTest extends TestCase
     /**
      * @return array<string, mixed>
      */
-    private function match(string $stage, bool $finished): array
+    private function match(string $stage, bool $finished, int $resultType = 1): array
     {
         $stageName = match ($stage) {
             'group' => 'Group Stage',
             'r16' => 'Round of 16',
+            'qf' => 'Quarter-final',
             'final' => 'Final',
             default => $stage,
         };
@@ -68,7 +70,7 @@ class TournamentMatchBudgetServiceTest extends TestCase
         return [
             'GroupName' => $stage === 'group' ? [['Description' => 'Group A']] : [],
             'StageName' => [['Description' => $stageName]],
-            'ResultType' => $finished ? 1 : 0,
+            'ResultType' => $finished ? $resultType : 0,
             'Home' => ['Abbreviation' => 'AAA'],
             'Away' => ['Abbreviation' => 'BBB'],
         ];

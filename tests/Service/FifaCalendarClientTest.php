@@ -73,6 +73,17 @@ class FifaCalendarClientTest extends TestCase
         ]));
     }
 
+    public function testIsFinishedForExtraTime(): void
+    {
+        self::assertTrue($this->client->isFinished([
+            'ResultType' => 3,
+            'HomeTeamScore' => 3,
+            'AwayTeamScore' => 2,
+            'MatchTime' => "125'",
+            'Winner' => '43922',
+        ]));
+    }
+
     public function testIsFinishedIsFalseWhenNotPlayed(): void
     {
         self::assertFalse($this->client->isFinished(['ResultType' => 0]));
