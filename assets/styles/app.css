@@ -278,36 +278,50 @@ main.container {
 }
 
 .locked-winner-card {
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid transparent;
     border-radius: 12px;
     padding: 0.9rem 1rem;
-    background: #fff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     height: 100%;
 }
 
 .locked-winner-card.locked-place-1 {
-    border-color: rgba(212, 175, 55, 0.45);
-    background: linear-gradient(160deg, rgba(212, 175, 55, 0.14), #fff 55%);
+    border-color: #9a7200;
+    background: linear-gradient(135deg, #f6e27a 0%, #d4a017 45%, #b8860b 100%);
+    color: #1a1200;
 }
 
 .locked-winner-card.locked-place-2 {
-    border-color: rgba(154, 154, 170, 0.45);
-    background: linear-gradient(160deg, rgba(154, 154, 170, 0.14), #fff 55%);
+    border-color: #6e6e78;
+    background: linear-gradient(135deg, #e8e8ee 0%, #b8b8c4 45%, #8e8e9a 100%);
+    color: #1a1a22;
 }
 
 .locked-winner-card.locked-place-3 {
-    border-color: rgba(205, 127, 50, 0.45);
-    background: linear-gradient(160deg, rgba(205, 127, 50, 0.14), #fff 55%);
+    border-color: #8a4a18;
+    background: linear-gradient(135deg, #e8a56a 0%, #c4722a 45%, #8c4f1a 100%);
+    color: #1a0c00;
 }
 
 .locked-winner-place {
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     margin-bottom: 0.35rem;
-    color: #5c5c66;
+    opacity: 0.85;
+}
+
+.locked-winner-card.locked-place-1 .locked-winner-place {
+    color: #5c4300;
+}
+
+.locked-winner-card.locked-place-2 .locked-winner-place {
+    color: #3a3a48;
+}
+
+.locked-winner-card.locked-place-3 .locked-winner-place {
+    color: #4a2208;
 }
 
 .locked-winner-names {
@@ -322,10 +336,32 @@ main.container {
     align-items: baseline;
 }
 
+.locked-winner-names strong {
+    color: inherit;
+}
+
+.locked-winner-stats {
+    font-size: 0.9em;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.locked-winner-card.locked-place-1 .locked-winner-stats {
+    color: #4a3600;
+}
+
+.locked-winner-card.locked-place-2 .locked-winner-stats {
+    color: #2e2e3a;
+}
+
+.locked-winner-card.locked-place-3 .locked-winner-stats {
+    color: #3e1a05;
+}
+
 .locked-winner-names li + li {
     margin-top: 0.35rem;
     padding-top: 0.35rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: 1px solid rgba(0, 0, 0, 0.18);
 }
 
 .card {
