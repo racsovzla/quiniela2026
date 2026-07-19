@@ -21,6 +21,10 @@
     {% endif %}
 </div>
 
+{% if app.user and lockedWinners|length > 0 %}
+    {{ include('leaderboard/_locked_winners.html.twig', {lockedWinners: lockedWinners, title: 'Ya hay lugares definidos'}) }}
+{% endif %}
+
 {% if app.user %}
     <section class="mb-4">
         <turbo-frame id="today-matches"

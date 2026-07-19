@@ -7,6 +7,9 @@ use App\Entity\User;
 use App\Repository\FixtureRepository;
 use App\Repository\PredictionRepository;
 use App\Service\FixturePredictionViewService;
+use App\Service\LeaderboardLockService;
+use App\Service\ScoringService;
+use App\Service\TournamentMatchBudgetService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,9 +25,26 @@ class HomeController extends AbstractController
     private const FALLBACK_LIMIT = 8;
 
     #[Route('/', name: 'app_home', methods: ['GET'])]
-    public function index(): Response
-    {
-        return $this->render('home/index.html.twig');
+    public function index(
+        ScoringService $scoringService,
+        TournamentMatchBudgetService $matchBudgetService,
+        LeaderboardLockService $lockService,
+    ): Response {
+        $lockedWinners = [];
+
+        if ($this->getUser()) {
+            $budget = $matchBudgetService->current();
+            $rows = $lockService->annotate(
+                $lockService->withSharedPositions($scoringService->leaderboard()),
+                $budget['maxPoints'],
+                $budget['maxExactHits'],
+            );
+            $lockedWinners = $lockService->lockedWinners($rows);
+        }
+
+        return $this->render('home/index.html.twig', [
+            'lockedWinners' => $lockedWinners,
+        ]);
     }
 
     /**

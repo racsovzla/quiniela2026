@@ -243,6 +243,91 @@ main.container {
     box-shadow: inset 0 0 0 1px rgba(245, 183, 0, 0.18);
 }
 
+.table-row-locked-place-1 {
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.22), rgba(212, 175, 55, 0.06));
+}
+
+.table-row-locked-place-2 {
+    background: linear-gradient(90deg, rgba(160, 160, 170, 0.22), rgba(160, 160, 170, 0.06));
+}
+
+.table-row-locked-place-3 {
+    background: linear-gradient(90deg, rgba(205, 127, 50, 0.22), rgba(205, 127, 50, 0.06));
+}
+
+.locked-place-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+}
+
+.locked-place-badge-1 {
+    background: #d4af37;
+    color: #1a1400;
+}
+
+.locked-place-badge-2 {
+    background: #9a9aaa;
+    color: #111;
+}
+
+.locked-place-badge-3 {
+    background: #cd7f32;
+    color: #1a0f00;
+}
+
+.locked-winner-card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    height: 100%;
+}
+
+.locked-winner-card.locked-place-1 {
+    border-color: rgba(212, 175, 55, 0.45);
+    background: linear-gradient(160deg, rgba(212, 175, 55, 0.14), #fff 55%);
+}
+
+.locked-winner-card.locked-place-2 {
+    border-color: rgba(154, 154, 170, 0.45);
+    background: linear-gradient(160deg, rgba(154, 154, 170, 0.14), #fff 55%);
+}
+
+.locked-winner-card.locked-place-3 {
+    border-color: rgba(205, 127, 50, 0.45);
+    background: linear-gradient(160deg, rgba(205, 127, 50, 0.14), #fff 55%);
+}
+
+.locked-winner-place {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.35rem;
+    color: #5c5c66;
+}
+
+.locked-winner-names {
+    list-style: none;
+    padding: 0;
+}
+
+.locked-winner-names li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    align-items: baseline;
+}
+
+.locked-winner-names li + li {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
 .card {
     border-radius: 14px;
 }

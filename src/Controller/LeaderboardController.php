@@ -6,7 +6,9 @@ use App\Entity\Fixture;
 use App\Entity\User;
 use App\Repository\FixtureRepository;
 use App\Repository\PredictionRepository;
+use App\Service\LeaderboardLockService;
 use App\Service\ScoringService;
+use App\Service\TournamentMatchBudgetService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +22,8 @@ class LeaderboardController extends AbstractController
         ScoringService $scoringService,
         FixtureRepository $fixtureRepository,
         PredictionRepository $predictionRepository,
+        TournamentMatchBudgetService $matchBudgetService,
+        LeaderboardLockService $lockService,
     ): Response {
         $nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
@@ -92,15 +96,21 @@ class LeaderboardController extends AbstractController
         }
         unset($fixtures);
 
-        $rows = $this->withSharedPositions($scoringService->leaderboard());
-        $remainingCount = $fixtureRepository->count(['status' => Fixture::STATUS_SCHEDULED]);
+        $budget = $matchBudgetService->current();
+        $rows = $lockService->annotate(
+            $lockService->withSharedPositions($scoringService->leaderboard()),
+            $budget['maxPoints'],
+            $budget['maxExactHits'],
+        );
 
         $latestFinished = $fixtureRepository->findLatestFinished(6);
         $nextScheduled = $fixtureRepository->findNextScheduled(6);
 
         return $this->render('leaderboard/index.html.twig', [
             'rows' => $rows,
-            'remainingCount' => $remainingCount,
+            'remainingCount' => $budget['remaining'],
+            'totalMatchCount' => $budget['total'],
+            'lockedWinners' => $lockService->lockedWinners($rows),
             'streakByUser' => $scoringService->activeStreakByUser(),
             'livePointsByUser' => $scoringService->livePointsByUser($nowUtc),
             'nextFixture' => $fixtureRepository->findNextEditableFixture($nowUtc),
@@ -200,31 +210,5 @@ class LeaderboardController extends AbstractController
             'userPoints' => $userPoints,
             'pointsMismatch' => $pointsMismatch,
         ]);
-    }
-
-    /**
-     * @param list<array{userId:int, name:string, points:int, exactHits:int}> $rows
-     *
-     * @return list<array{userId:int, name:string, points:int, exactHits:int, rank:int}>
-     */
-    private function withSharedPositions(array $rows): array
-    {
-        $rankedRows = [];
-        $currentRank = 0;
-        $previousPoints = null;
-        $previousExactHits = null;
-
-        foreach ($rows as $index => $row) {
-            if ($row['points'] !== $previousPoints || $row['exactHits'] !== $previousExactHits) {
-                $currentRank = $index + 1;
-                $previousPoints = $row['points'];
-                $previousExactHits = $row['exactHits'];
-            }
-
-            $row['rank'] = $currentRank;
-            $rankedRows[] = $row;
-        }
-
-        return $rankedRows;
     }
 }

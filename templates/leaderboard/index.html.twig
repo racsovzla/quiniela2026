@@ -26,11 +26,13 @@
     </div>
 {% endif %}
 
+{{ include('leaderboard/_locked_winners.html.twig', {lockedWinners: lockedWinners}) }}
+
 <div class="row g-4 align-items-start">
     <div class="col-lg-4">
-        <div class="mb-2 d-flex justify-content-between align-items-center">
+        <div class="mb-2 d-flex justify-content-between align-items-center gap-2 flex-wrap">
             <h2 class="h5 mb-0">Usuarios</h2>
-            <span class="badge bg-primary">Faltan {{ remainingCount }} partido{{ remainingCount == 1 ? '' : 's' }} sin finalizar</span>
+            <span class="badge bg-primary">Faltan {{ remainingCount }} de {{ totalMatchCount }} partido{{ totalMatchCount == 1 ? '' : 's' }}</span>
         </div>
         <p class="screen-note mb-2">Los <strong>+X</strong> son puntos en vivo antes del cierre. El ranking oficial se fija cuando el partido finaliza.</p>
         <svg style="display: none;">
@@ -66,7 +68,14 @@
                     {% for row in rows %}
                         {% set livePoints = livePointsByUser[row.userId]|default(0) %}
                         {% set streak = streakByUser[row.userId]|default(0) %}
-                        <tr class="{{ app.user and row.userId == app.user.id ? 'table-row-current-user' : '' }}">
+                        {% set rowClasses = [] %}
+                        {% if app.user and row.userId == app.user.id %}
+                            {% set rowClasses = rowClasses|merge(['table-row-current-user']) %}
+                        {% endif %}
+                        {% if row.lockedPlace is defined and row.lockedPlace %}
+                            {% set rowClasses = rowClasses|merge(['table-row-locked-place-' ~ row.lockedPlace]) %}
+                        {% endif %}
+                        <tr class="{{ rowClasses|join(' ') }}">
                             <td>
                                 {% if row.rank == 1 %}
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" class="flex-shrink-0" style="vertical-align: -0.25em;">
@@ -105,6 +114,9 @@
                                     <strong style="color: #CD7F32;"><a href="#" class="js-open-user-audit text-decoration-none" data-user-id="{{ row.userId }}" data-user-name="{{ row.name }}" style="color: inherit; cursor: pointer;">{{ row.name }}</a></strong>
                                 {% else %}
                                     <a href="#" class="js-open-user-audit text-decoration-none" data-user-id="{{ row.userId }}" data-user-name="{{ row.name }}" style="color: inherit; cursor: pointer;">{{ row.name }}</a>
+                                {% endif %}
+                                {% if row.lockedPlace is defined and row.lockedPlace %}
+                                    <span class="badge locked-place-badge locked-place-badge-{{ row.lockedPlace }} ms-1">Definido</span>
                                 {% endif %}
                             </td>
                             <td class="text-center">

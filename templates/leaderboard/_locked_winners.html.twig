@@ -1,0 +1,27 @@
+{% if lockedWinners is defined and lockedWinners|length > 0 %}
+    {% set placeLabels = {1: '1.er lugar', 2: '2.º lugar', 3: '3.er lugar'} %}
+    {% set placeClasses = {1: 'locked-place-1', 2: 'locked-place-2', 3: 'locked-place-3'} %}
+    <div class="locked-winners mb-4 {{ compact|default(false) ? 'locked-winners--compact' : '' }}">
+        <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-2">
+            <h2 class="h5 mb-0">{{ title|default('Lugares ya definidos') }}</h2>
+            <small class="text-body-secondary">Matemáticamente asegurados con los partidos que faltan</small>
+        </div>
+        <div class="row g-3">
+            {% for place, winners in lockedWinners %}
+                <div class="col-md-4">
+                    <div class="locked-winner-card {{ placeClasses[place] }}">
+                        <div class="locked-winner-place">{{ placeLabels[place] }}</div>
+                        <ul class="locked-winner-names mb-0">
+                            {% for winner in winners %}
+                                <li>
+                                    <strong>{{ winner.name }}</strong>
+                                    <span class="text-body-secondary">{{ winner.points }} pts · {{ winner.exactHits }} exactos</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
